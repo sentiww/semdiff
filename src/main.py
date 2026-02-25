@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import logging
 import sys
+import wordnet
 from typing import Sequence
 
 LOGGER = logging.getLogger("main")
@@ -39,6 +40,7 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         action="store_true",
         help="Run without making changes",
     )
+
     return parser.parse_args(argv)
 
 
@@ -46,6 +48,9 @@ def run(*, dry_run: bool = False, logger: logging.Logger = LOGGER) -> int:
     logger.info("Running main")
     if dry_run:
         logger.info("Running in dry-run mode")
+
+    wordnet_service = wordnet.WordNetService(logger=logger.getChild("wordnet"))
+    distance = wordnet_service.explain("dog.n.01", "dog.n.01")
 
     logger.info("Completed successfully")
     return EXIT_OK
