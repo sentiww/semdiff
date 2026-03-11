@@ -9,6 +9,7 @@
   "customizations": {
     "vscode": {
       "settings": {
+        "editor.formatOnSave": true,
         "python.defaultInterpreterPath": "/usr/local/python/current/bin/python",
         "python.analysis.typeCheckingMode": "basic",
         "python.testing.pytestEnabled": true,
@@ -19,13 +20,23 @@
         "[python]": {
           "editor.defaultFormatter": "ms-python.black-formatter",
           "editor.formatOnSave": true
+        },
+        "[shellscript]": {
+          "editor.defaultFormatter": "mkhl.shfmt",
+          "editor.formatOnSave": true
+        },
+        "[markdown]": {
+          "editor.defaultFormatter": "esbenp.prettier-vscode",
+          "editor.formatOnSave": true
         }
       },
       "extensions": [
         "openai.chatgpt",
         "ms-python.python",
         "ms-python.vscode-pylance",
-        "ms-python.black-formatter"
+        "ms-python.black-formatter",
+        "mkhl.shfmt",
+        "esbenp.prettier-vscode"
       ]
     }
   },
