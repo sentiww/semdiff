@@ -1,1 +1,3 @@
 __pycache__
+datasets/imagenet-o/n*/
+datasets/imagenet-o/n*/*
