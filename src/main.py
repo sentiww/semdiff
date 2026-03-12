@@ -40,40 +40,8 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         help="Enable debug logging",
     )
     subparsers = parser.add_subparsers(dest="command")
-
-    datasets_parser = subparsers.add_parser("datasets", help="Dataset commands")
-    datasets_subparsers = datasets_parser.add_subparsers(dest="datasets_command")
-    datasets_init_parser = datasets_subparsers.add_parser(
-        "init", help="Initialize a dataset"
-    )
-    datasets_init_parser.add_argument(
-        "dataset",
-        choices=["imagenet-1k", "imagenet-o"],
-        help="Dataset to initialize",
-    )
-    datasets_clear_parser = datasets_subparsers.add_parser(
-        "clear",
-        help="Delete generated synset folders for a dataset",
-    )
-    datasets_clear_parser.add_argument(
-        "dataset",
-        choices=["imagenet-1k", "imagenet-o"],
-        help="Dataset to clear",
-    )
-
-    evaluate_parser = subparsers.add_parser(
-        "evaluate", help="Model evaluation commands"
-    )
-    evaluate_subparsers = evaluate_parser.add_subparsers(dest="evaluate_command")
-    evaluate_resnet_parser = evaluate_subparsers.add_parser(
-        "resnet",
-        help="Evaluate a ResNet-50",
-    )
-    evaluate_resnet_parser.add_argument(
-        "dataset",
-        choices=["imagenet-1k", "imagenet-o"],
-        help="Dataset to evaluate",
-    )
+    datasets.register_parser(subparsers)
+    evaluate.register_parser(subparsers)
 
     return parser.parse_args(argv)
 
@@ -97,19 +65,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     configure_logging(verbose=args.verbose)
 
     try:
-        if args.command == "datasets":
-            if args.datasets_command == "init":
-                datasets.init_dataset(args.dataset)
-                return EXIT_OK
-            if args.datasets_command == "clear":
-                datasets.clear_dataset(args.dataset)
-                return EXIT_OK
-            raise ValueError("Missing datasets subcommand")
-        if args.command == "evaluate":
-            if args.evaluate_command == "resnet":
-                evaluate.evaluate_resnet(args.dataset)
-                return EXIT_OK
-            raise ValueError("Missing evaluate subcommand")
+        if datasets.run_command(args):
+            return EXIT_OK
+        if evaluate.run_command(args):
+            return EXIT_OK
         return run()
     except KeyboardInterrupt:
         LOGGER.warning("Interrupted by user")

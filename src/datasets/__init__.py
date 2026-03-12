@@ -1,3 +1,4 @@
+from .command import register_parser, run_command
 from .common import dataset_root
 from .clear import clear_dataset
 from .imagenet import load_imagenet_1k_synsets
@@ -18,4 +19,6 @@ __all__ = [
     "load_index_to_wnid",
     "load_validation_wnids",
     "load_wnid_to_index",
+    "register_parser",
+    "run_command",
 ]
