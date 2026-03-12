@@ -1,2 +1,7 @@
 numpy
 nltk
+networkx
+matplotlib
+scipy
+torch
+torchvision

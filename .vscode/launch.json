@@ -1,0 +1,74 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Run main.py",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/main.py",
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole"
+    },
+    {
+      "name": "Run datasets init",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/main.py",
+      "args": [
+        "-v",
+        "datasets",
+        "init",
+        "${input:datasetName}"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole"
+    },
+    {
+      "name": "Run datasets clear",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/main.py",
+      "args": [
+        "-v",
+        "datasets",
+        "clear",
+        "${input:datasetName}"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole"
+    },
+    {
+      "name": "Run evaluate model",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/main.py",
+      "args": [
+        "-v",
+        "evaluate",
+        "${input:modelName}",
+        "${input:datasetName}"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "datasetName",
+      "type": "pickString",
+      "description": "Select the dataset",
+      "options": [
+        "imagenet-1k",
+        "imagenet-o"
+      ]
+    },
+    {
+      "id": "modelName",
+      "type": "pickString",
+      "description": "Select the model to evaluate",
+      "options": [
+        "resnet"
+      ]
+    }
+  ]
+}

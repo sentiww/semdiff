@@ -6,6 +6,9 @@ import sys
 import wordnet
 from typing import Sequence
 
+import datasets
+import evaluate
+
 LOGGER = logging.getLogger("main")
 
 EXIT_OK = 0
@@ -22,6 +25,7 @@ def configure_logging(verbose: bool = False) -> None:
         stream=sys.stderr,
         force=True,
     )
+    logging.getLogger("PIL").setLevel(logging.INFO)
 
 
 def parse_args(argv: Sequence[str]) -> argparse.Namespace:
@@ -35,10 +39,40 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
         action="store_true",
         help="Enable debug logging",
     )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Run without making changes",
+    subparsers = parser.add_subparsers(dest="command")
+
+    datasets_parser = subparsers.add_parser("datasets", help="Dataset commands")
+    datasets_subparsers = datasets_parser.add_subparsers(dest="datasets_command")
+    datasets_init_parser = datasets_subparsers.add_parser(
+        "init", help="Initialize a dataset"
+    )
+    datasets_init_parser.add_argument(
+        "dataset",
+        choices=["imagenet-1k", "imagenet-o"],
+        help="Dataset to initialize",
+    )
+    datasets_clear_parser = datasets_subparsers.add_parser(
+        "clear",
+        help="Delete generated synset folders for a dataset",
+    )
+    datasets_clear_parser.add_argument(
+        "dataset",
+        choices=["imagenet-1k", "imagenet-o"],
+        help="Dataset to clear",
+    )
+
+    evaluate_parser = subparsers.add_parser(
+        "evaluate", help="Model evaluation commands"
+    )
+    evaluate_subparsers = evaluate_parser.add_subparsers(dest="evaluate_command")
+    evaluate_resnet_parser = evaluate_subparsers.add_parser(
+        "resnet",
+        help="Evaluate a ResNet-50",
+    )
+    evaluate_resnet_parser.add_argument(
+        "dataset",
+        choices=["imagenet-1k", "imagenet-o"],
+        help="Dataset to evaluate",
     )
 
     return parser.parse_args(argv)
@@ -63,7 +97,20 @@ def main(argv: Sequence[str] | None = None) -> int:
     configure_logging(verbose=args.verbose)
 
     try:
-        return run(dry_run=args.dry_run)
+        if args.command == "datasets":
+            if args.datasets_command == "init":
+                datasets.init_dataset(args.dataset)
+                return EXIT_OK
+            if args.datasets_command == "clear":
+                datasets.clear_dataset(args.dataset)
+                return EXIT_OK
+            raise ValueError("Missing datasets subcommand")
+        if args.command == "evaluate":
+            if args.evaluate_command == "resnet":
+                evaluate.evaluate_resnet(args.dataset)
+                return EXIT_OK
+            raise ValueError("Missing evaluate subcommand")
+        return run()
     except KeyboardInterrupt:
         LOGGER.warning("Interrupted by user")
         return EXIT_INTERRUPTED
