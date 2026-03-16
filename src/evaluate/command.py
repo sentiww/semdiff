@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import argparse
 
+from .densenet import evaluate_densenet
 from .resnet import evaluate_resnet
+from .vgg import evaluate_vgg
 
 DATASET_NAMES = ("imagenet-1k", "imagenet-o")
 
@@ -26,6 +28,26 @@ def register_parser(
         help="Dataset to evaluate",
     )
 
+    evaluate_densenet_parser = evaluate_subparsers.add_parser(
+        "densenet",
+        help="Evaluate a DenseNet-121 model",
+    )
+    evaluate_densenet_parser.add_argument(
+        "dataset",
+        choices=DATASET_NAMES,
+        help="Dataset to evaluate",
+    )
+
+    evaluate_vgg_parser = evaluate_subparsers.add_parser(
+        "vgg",
+        help="Evaluate a VGG-16 model",
+    )
+    evaluate_vgg_parser.add_argument(
+        "dataset",
+        choices=DATASET_NAMES,
+        help="Dataset to evaluate",
+    )
+
 
 def run_command(args: argparse.Namespace) -> bool:
     if args.command != "evaluate":
@@ -33,6 +55,12 @@ def run_command(args: argparse.Namespace) -> bool:
 
     if args.evaluate_command == "resnet":
         evaluate_resnet(args.dataset)
+        return True
+    if args.evaluate_command == "densenet":
+        evaluate_densenet(args.dataset)
+        return True
+    if args.evaluate_command == "vgg":
+        evaluate_vgg(args.dataset)
         return True
 
     raise ValueError("Missing evaluate subcommand")

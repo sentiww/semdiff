@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import logging
-from torchvision.models import ResNet50_Weights, resnet50
+from torchvision.models import DenseNet121_Weights, densenet121
 
 from .common import (
     LOGGER,
@@ -10,17 +10,17 @@ from .model import EvaluationModelSpec
 from .runner import evaluate_model
 
 
-def evaluate_resnet(
+def evaluate_densenet(
     dataset_name: str, *, logger: logging.Logger = LOGGER
 ) -> None:
-    weights = ResNet50_Weights.IMAGENET1K_V2
+    weights = DenseNet121_Weights.IMAGENET1K_V1
     evaluate_model(
         dataset_name,
         spec=EvaluationModelSpec(
-            model_name="resnet",
-            weights_name="ResNet50_Weights.IMAGENET1K_V2",
+            model_name="densenet",
+            weights_name="DenseNet121_Weights.IMAGENET1K_V1",
             weights=weights,
-            model=resnet50(weights=weights),
+            model=densenet121(weights=weights),
         ),
         logger=logger,
     )

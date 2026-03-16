@@ -8,6 +8,7 @@ from typing import Sequence
 
 import datasets
 import evaluate
+import stats
 
 LOGGER = logging.getLogger("main")
 
@@ -42,6 +43,7 @@ def parse_args(argv: Sequence[str]) -> argparse.Namespace:
     subparsers = parser.add_subparsers(dest="command")
     datasets.register_parser(subparsers)
     evaluate.register_parser(subparsers)
+    stats.register_parser(subparsers)
 
     return parser.parse_args(argv)
 
@@ -68,6 +70,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         if datasets.run_command(args):
             return EXIT_OK
         if evaluate.run_command(args):
+            return EXIT_OK
+        if stats.run_command(args):
             return EXIT_OK
         return run()
     except KeyboardInterrupt:
