@@ -3,10 +3,10 @@ from __future__ import annotations
 import argparse
 
 
-def _handle_path_distance(args: argparse.Namespace) -> None:
-    from .path_distance import build_path_distance
+def _handle_semantic(args: argparse.Namespace) -> None:
+    from .semantic import build_semantic_metrics
 
-    build_path_distance(args.model, args.dataset)
+    build_semantic_metrics(args.model, args.dataset)
 
 
 def register_parser(
@@ -19,16 +19,16 @@ def register_parser(
     analysis_subparsers = analysis_parser.add_subparsers(dest="analysis_command")
     analysis_subparsers.required = True
 
-    path_distance_parser = analysis_subparsers.add_parser(
-        "path-distance",
-        help="Compute WordNet path distances from output predictions",
+    semantic_parser = analysis_subparsers.add_parser(
+        "semantic",
+        help="Compute WordNet semantic metrics from output predictions",
     )
-    path_distance_parser.add_argument(
+    semantic_parser.add_argument(
         "model",
         help="Model output directory name under output/",
     )
-    path_distance_parser.add_argument(
+    semantic_parser.add_argument(
         "dataset",
         help="Dataset output directory name under output/<model>/",
     )
-    path_distance_parser.set_defaults(handler=_handle_path_distance)
+    semantic_parser.set_defaults(handler=_handle_semantic)

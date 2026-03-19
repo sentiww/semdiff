@@ -127,7 +127,7 @@
       "type": "pickString",
       "description": "Select the analysis command",
       "options": [
-        "path-distance"
+        "semantic"
       ]
     },
     {

@@ -96,7 +96,7 @@ def _build_metric_function(
     return run_metric
 
 
-def build_path_distance(
+def build_semantic_metrics(
     model_name: str,
     dataset_name: str,
     *,
@@ -104,8 +104,8 @@ def build_path_distance(
 ) -> Path:
     output_path = OUTPUT_ROOT / model_name / dataset_name
     predictions_path = output_path / "predictions.jsonl"
-    annotated_path = output_path / "path-distance.jsonl"
-    summary_path = output_path / "path-distance-summary.json"
+    annotated_path = output_path / "semantics.jsonl"
+    summary_path = output_path / "semantic-summary.json"
 
     if not predictions_path.exists():
         raise FileNotFoundError(f"Missing predictions file: {predictions_path}")
