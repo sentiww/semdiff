@@ -16,5 +16,6 @@ Initialize the dataset into synset folders:
 Initialize the dataset (no need to download manually):
 
 ```bash
+./run.sh wordnet init
 ./run.sh datasets init imagenet-o
 ```

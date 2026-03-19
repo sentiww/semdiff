@@ -1,64 +1,16 @@
 from __future__ import annotations
 
-import argparse
 import logging
 import sys
-import wordnet
 from typing import Sequence
 
-import datasets
-import evaluate
-import stats
+from bootstrap import configure_logging, parse_args, run_command
 
 LOGGER = logging.getLogger("main")
 
 EXIT_OK = 0
 EXIT_ERROR = 1
 EXIT_INTERRUPTED = 130
-
-
-def configure_logging(verbose: bool = False) -> None:
-    level = logging.DEBUG if verbose else logging.INFO
-    logging.basicConfig(
-        level=level,
-        format="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        stream=sys.stderr,
-        force=True,
-    )
-    logging.getLogger("PIL").setLevel(logging.INFO)
-
-
-def parse_args(argv: Sequence[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        prog="main",
-        description="Main entrypoint",
-    )
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="store_true",
-        help="Enable debug logging",
-    )
-    subparsers = parser.add_subparsers(dest="command")
-    datasets.register_parser(subparsers)
-    evaluate.register_parser(subparsers)
-    stats.register_parser(subparsers)
-
-    return parser.parse_args(argv)
-
-
-def run(*, dry_run: bool = False, logger: logging.Logger = LOGGER) -> int:
-    logger.info("Running main")
-    if dry_run:
-        logger.info("Running in dry-run mode")
-
-    wordnet_service = wordnet.WordNetService(logger=logger.getChild("wordnet"))
-    distance = wordnet_service.explain("dog.n.01", "dog.n.01")
-
-    logger.info("Completed successfully")
-    return EXIT_OK
-
 
 def main(argv: Sequence[str] | None = None) -> int:
     argv = sys.argv[1:] if argv is None else argv
@@ -67,20 +19,17 @@ def main(argv: Sequence[str] | None = None) -> int:
     configure_logging(verbose=args.verbose)
 
     try:
-        if datasets.run_command(args):
+        if run_command(args):
             return EXIT_OK
-        if evaluate.run_command(args):
-            return EXIT_OK
-        if stats.run_command(args):
-            return EXIT_OK
-        return run()
+
+        LOGGER.error("No command handled the provided arguments")
+        return EXIT_ERROR
     except KeyboardInterrupt:
         LOGGER.warning("Interrupted by user")
         return EXIT_INTERRUPTED
     except Exception:
         LOGGER.exception("Unhandled error")
         return EXIT_ERROR
-
 
 if __name__ == "__main__":
     raise SystemExit(main())

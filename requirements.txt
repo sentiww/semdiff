@@ -5,3 +5,4 @@ matplotlib
 scipy
 torch
 torchvision
+open_clip_torch

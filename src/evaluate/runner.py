@@ -2,25 +2,128 @@ from __future__ import annotations
 
 import logging
 import time
+from pathlib import Path
+from typing import Any
+from typing import Sequence
 
-import datasets
 import torch
+from datasets.common import dataset_root
 from torch.utils.data import DataLoader
 from torchvision.datasets.folder import default_loader
 
-from .common import (
-    LOGGER,
-    PROGRESS_LOG_EVERY_BATCHES,
-    SynsetImageFolder,
-    build_prediction_record,
-    build_summary,
-    load_imagenet_synset_index_map,
-    resolve_output_paths,
-    validate_imagefolder_dataset,
-    write_prediction_record,
-    write_summary,
-)
+from .image_dataset import SynsetImageFolder
+from .image_dataset import validate_imagefolder_dataset
+from .index_map import load_imagenet_synset_index_map
 from .model import EvaluationModelSpec
+from .paths import LOGGER
+from .paths import PROGRESS_LOG_EVERY_BATCHES
+from .paths import resolve_output_paths
+from .records import write_prediction_record
+from .records import write_summary
+
+
+class EvaluationTotals:
+    def __init__(self) -> None:
+        self.total = 0
+        self.comparable_total = 0
+        self.sample_offset = 0
+
+
+def _resolve_device() -> torch.device:
+    return torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+
+def _build_class_index_to_model_index(
+    image_dataset: SynsetImageFolder,
+    synset_to_index: dict[str, int],
+) -> dict[int, int]:
+    class_index_to_model_index: dict[int, int] = {}
+    for synset, class_index in image_dataset.class_to_idx.items():
+        model_index = synset_to_index.get(synset, -1)
+        class_index_to_model_index[class_index] = model_index
+    return class_index_to_model_index
+
+
+def _build_dataloader(image_dataset: SynsetImageFolder) -> DataLoader:
+    return DataLoader(
+        image_dataset,
+        batch_size=32,
+        shuffle=False,
+        num_workers=0,
+    )
+
+
+def _map_targets(
+    targets: torch.Tensor,
+    class_index_to_model_index: dict[int, int],
+) -> list[int]:
+    mapped_targets: list[int] = []
+    for target in targets.tolist():
+        mapped_target = class_index_to_model_index.get(int(target), -1)
+        mapped_targets.append(mapped_target)
+    return mapped_targets
+
+
+def _update_totals(
+    totals: EvaluationTotals,
+    *,
+    batch_size: int,
+    mapped_targets: Sequence[int],
+) -> None:
+    totals.total += batch_size
+
+    comparable_count = 0
+    for expected in mapped_targets:
+        if expected >= 0:
+            comparable_count += 1
+    totals.comparable_total += comparable_count
+
+
+def _write_batch_predictions(
+    predictions_file: Any,
+    *,
+    dataset_path: Path,
+    image_dataset: SynsetImageFolder,
+    categories: Sequence[str],
+    index_to_synset: dict[int, str],
+    top1_indices: torch.Tensor,
+    top1_scores: torch.Tensor,
+    sample_offset: int,
+) -> None:
+    batch_size = len(top1_indices)
+    for item_index in range(batch_size):
+        image_path, _ = image_dataset.samples[sample_offset + item_index]
+        predicted_index = int(top1_indices[item_index])
+        write_prediction_record(
+            predictions_file,
+            dataset_path=dataset_path,
+            image_path=image_path,
+            categories=categories,
+            index_to_synset=index_to_synset,
+            predicted_index=predicted_index,
+            confidence=float(top1_scores[item_index]),
+        )
+
+
+def _log_progress(
+    dataset_logger: logging.Logger,
+    *,
+    sample_offset: int,
+    dataset_size: int,
+    batch_number: int,
+    num_batches: int,
+    totals: EvaluationTotals,
+    started_at: float,
+) -> None:
+    dataset_logger.info(
+        "Progress: %s/%s samples (%s/%s batches), comparable=%s, elapsed=%.1fs",
+        sample_offset,
+        dataset_size,
+        batch_number,
+        num_batches,
+        totals.comparable_total,
+        time.perf_counter() - started_at,
+    )
 
 
 def evaluate_model(
@@ -30,40 +133,31 @@ def evaluate_model(
     logger: logging.Logger = LOGGER,
 ) -> None:
     dataset_logger = logger.getChild(f"{spec.model_name}.{dataset_name}")
-    dataset_path = datasets.dataset_root(dataset_name)
+    dataset_path = dataset_root(dataset_name)
     output_paths = resolve_output_paths(spec.model_name, dataset_name)
 
     validate_imagefolder_dataset(dataset_path)
     output_paths.output_path.mkdir(parents=True, exist_ok=True)
 
-    categories = spec.weights.meta["categories"]
-    synset_to_index, index_to_synset = load_imagenet_synset_index_map(categories)
-    model = spec.model
-    model.eval()
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.to(device)
-
+    categories = spec.categories
+    synset_to_index, index_to_synset = load_imagenet_synset_index_map(list(categories))
     image_dataset = SynsetImageFolder(
         dataset_path,
-        transform=spec.weights.transforms(),
+        transform=spec.transform,
         loader=default_loader,
     )
-    class_index_to_model_index = {
-        class_index: synset_to_index[synset]
-        for synset, class_index in image_dataset.class_to_idx.items()
-    }
-    dataloader = DataLoader(
+    class_index_to_model_index = _build_class_index_to_model_index(
         image_dataset,
-        batch_size=32,
-        shuffle=False,
-        num_workers=0,
+        synset_to_index,
     )
+    dataloader = _build_dataloader(image_dataset)
 
-    total = 0
-    top1_correct = 0
-    top5_correct = 0
-    sample_offset = 0
+    model = spec.model
+    model.eval()
+    device = _resolve_device()
+    model.to(device)
+
+    totals = EvaluationTotals()
     started_at = time.perf_counter()
 
     dataset_logger.info("Evaluating %s samples on %s", len(image_dataset), device)
@@ -76,86 +170,54 @@ def evaluate_model(
     with output_paths.predictions_path.open("w", encoding="utf-8") as predictions_file:
         with torch.inference_mode():
             for batch_number, (images, targets) in enumerate(dataloader, start=1):
-                batch_size = len(targets)
                 images = images.to(device)
-                logits = model(images)
-                probabilities = torch.nn.functional.softmax(logits, dim=1)
+                probabilities = torch.nn.functional.softmax(model(images), dim=1)
                 top1_scores, top1_indices = probabilities.max(dim=1)
-                top5_scores, top5_indices = torch.topk(probabilities, k=5, dim=1)
 
-                mapped_targets = [
-                    class_index_to_model_index[int(target)]
-                    for target in targets.tolist()
-                ]
-
-                total += batch_size
-                top1_correct += sum(
-                    int(prediction) == expected
-                    for prediction, expected in zip(top1_indices.tolist(), mapped_targets)
+                mapped_targets = _map_targets(targets, class_index_to_model_index)
+                batch_size = len(targets)
+                _update_totals(
+                    totals,
+                    batch_size=batch_size,
+                    mapped_targets=mapped_targets,
                 )
-                top5_correct += sum(
-                    expected in predictions
-                    for expected, predictions in zip(
-                        mapped_targets,
-                        top5_indices.tolist(),
-                    )
+                _write_batch_predictions(
+                    predictions_file,
+                    dataset_path=dataset_path,
+                    image_dataset=image_dataset,
+                    categories=categories,
+                    index_to_synset=index_to_synset,
+                    top1_indices=top1_indices,
+                    top1_scores=top1_scores,
+                    sample_offset=totals.sample_offset,
                 )
 
-                for item_index in range(batch_size):
-                    image_path, _ = image_dataset.samples[sample_offset + item_index]
-                    predicted_index = int(top1_indices[item_index])
-                    expected_index = mapped_targets[item_index]
-                    top5_prediction_indices = [
-                        int(index) for index in top5_indices[item_index].tolist()
-                    ]
-                    top5_prediction_scores = [
-                        float(score) for score in top5_scores[item_index].tolist()
-                    ]
-
-                    record = build_prediction_record(
-                        dataset_path=dataset_path,
-                        image_path=image_path,
-                        categories=categories,
-                        index_to_synset=index_to_synset,
-                        predicted_index=predicted_index,
-                        expected_index=expected_index,
-                        confidence=float(top1_scores[item_index]),
-                        top5_prediction_indices=top5_prediction_indices,
-                        top5_prediction_scores=top5_prediction_scores,
-                    )
-                    write_prediction_record(predictions_file, record)
-
-                sample_offset += batch_size
-
+                totals.sample_offset += batch_size
                 should_log_progress = (
                     batch_number % PROGRESS_LOG_EVERY_BATCHES == 0
-                    or sample_offset == len(image_dataset)
+                    or totals.sample_offset == len(image_dataset)
                 )
                 if should_log_progress:
-                    elapsed = time.perf_counter() - started_at
-                    dataset_logger.info(
-                        "Progress: %s/%s samples (%s/%s batches), top1=%.4f, top5=%.4f, elapsed=%.1fs",
-                        sample_offset,
-                        len(image_dataset),
-                        batch_number,
-                        len(dataloader),
-                        top1_correct / total if total else 0.0,
-                        top5_correct / total if total else 0.0,
-                        elapsed,
+                    _log_progress(
+                        dataset_logger,
+                        sample_offset=totals.sample_offset,
+                        dataset_size=len(image_dataset),
+                        batch_number=batch_number,
+                        num_batches=len(dataloader),
+                        totals=totals,
+                        started_at=started_at,
                     )
 
-    summary = build_summary(
+    write_summary(
+        output_paths.summary_path,
         model_name=spec.model_name,
         dataset_name=dataset_name,
         dataset_path=dataset_path,
-        num_samples=total,
-        top1_accuracy=top1_correct / total if total else 0.0,
-        top5_accuracy=top5_correct / total if total else 0.0,
+        num_samples=totals.total,
         device=str(device),
         weights=spec.weights_name,
         predictions_path=output_paths.predictions_path,
     )
-    write_summary(output_paths.summary_path, summary)
     dataset_logger.info(
         "Wrote %s and %s in %.1fs",
         output_paths.predictions_path,

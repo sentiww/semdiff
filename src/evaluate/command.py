@@ -1,12 +1,39 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass
 
-from .densenet import evaluate_densenet
-from .resnet import evaluate_resnet
-from .vgg import evaluate_vgg
+from datasets.registry import DATASET_NAMES
 
-DATASET_NAMES = ("imagenet-1k", "imagenet-o")
+from .registry import EvaluationCommandSpec
+from .registry import EVALUATION_COMMANDS
+
+
+@dataclass(frozen=True)
+class EvaluateCommandHandler:
+    spec: EvaluationCommandSpec
+
+    def register_parser(
+        self,
+        evaluate_subparsers: argparse._SubParsersAction[argparse.ArgumentParser],
+    ) -> None:
+        command_parser = evaluate_subparsers.add_parser(
+            self.spec.command_name,
+            help=self.spec.help_text,
+        )
+        _add_dataset_argument(command_parser)
+        command_parser.set_defaults(handler=self.run)
+
+    def run(self, args: argparse.Namespace) -> None:
+        from .runner import evaluate_model
+
+        evaluate_model(args.dataset, spec=self.spec.build_spec())
+
+
+EVALUATE_COMMAND_HANDLERS: tuple[EvaluateCommandHandler, ...] = tuple(
+    EvaluateCommandHandler(spec=command_spec)
+    for command_spec in EVALUATION_COMMANDS
+)
 
 
 def register_parser(
@@ -17,50 +44,15 @@ def register_parser(
         help="Model evaluation commands",
     )
     evaluate_subparsers = evaluate_parser.add_subparsers(dest="evaluate_command")
+    evaluate_subparsers.required = True
 
-    evaluate_resnet_parser = evaluate_subparsers.add_parser(
-        "resnet",
-        help="Evaluate a ResNet-50 model",
-    )
-    evaluate_resnet_parser.add_argument(
+    for command_handler in EVALUATE_COMMAND_HANDLERS:
+        command_handler.register_parser(evaluate_subparsers)
+
+
+def _add_dataset_argument(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument(
         "dataset",
         choices=DATASET_NAMES,
         help="Dataset to evaluate",
     )
-
-    evaluate_densenet_parser = evaluate_subparsers.add_parser(
-        "densenet",
-        help="Evaluate a DenseNet-121 model",
-    )
-    evaluate_densenet_parser.add_argument(
-        "dataset",
-        choices=DATASET_NAMES,
-        help="Dataset to evaluate",
-    )
-
-    evaluate_vgg_parser = evaluate_subparsers.add_parser(
-        "vgg",
-        help="Evaluate a VGG-16 model",
-    )
-    evaluate_vgg_parser.add_argument(
-        "dataset",
-        choices=DATASET_NAMES,
-        help="Dataset to evaluate",
-    )
-
-
-def run_command(args: argparse.Namespace) -> bool:
-    if args.command != "evaluate":
-        return False
-
-    if args.evaluate_command == "resnet":
-        evaluate_resnet(args.dataset)
-        return True
-    if args.evaluate_command == "densenet":
-        evaluate_densenet(args.dataset)
-        return True
-    if args.evaluate_command == "vgg":
-        evaluate_vgg(args.dataset)
-        return True
-
-    raise ValueError("Missing evaluate subcommand")

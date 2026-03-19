@@ -2,13 +2,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
-
-import torch
+from typing import Callable
+from typing import Sequence
 
 
 @dataclass(frozen=True)
 class EvaluationModelSpec:
     model_name: str
     weights_name: str
-    weights: Any
-    model: torch.nn.Module
+    categories: Sequence[str]
+    transform: Callable
+    model: Any

@@ -2,14 +2,6 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Run main.py",
-      "type": "debugpy",
-      "request": "launch",
-      "program": "${workspaceFolder}/src/main.py",
-      "cwd": "${workspaceFolder}",
-      "console": "internalConsole"
-    },
-    {
       "name": "Run datasets init",
       "type": "debugpy",
       "request": "launch",
@@ -50,6 +42,62 @@
       ],
       "cwd": "${workspaceFolder}",
       "console": "internalConsole"
+    },
+    {
+      "name": "Run analysis",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/main.py",
+      "args": [
+        "-v",
+        "analysis",
+        "${input:analysisCommand}",
+        "${input:modelName}",
+        "${input:datasetName}"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole"
+    },
+    {
+      "name": "Run synset id",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/main.py",
+      "args": [
+        "-v",
+        "synset",
+        "id",
+        "${input:synsetQuery}"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole"
+    },
+    {
+      "name": "Run synset readable",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/main.py",
+      "args": [
+        "-v",
+        "synset",
+        "readable",
+        "${input:synsetId}"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole"
+    },
+    {
+      "name": "Run wordnet init",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/src/main.py",
+      "args": [
+        "-v",
+        "wordnet",
+        "init"
+      ],
+      "cwd": "${workspaceFolder}",
+      "console": "internalConsole"
     }
   ],
   "inputs": [
@@ -65,10 +113,34 @@
     {
       "id": "modelName",
       "type": "pickString",
-      "description": "Select the model to evaluate",
+      "description": "Select the model",
       "options": [
-        "resnet"
+        "resnet",
+        "densenet",
+        "vgg",
+        "vit-b-16",
+        "clip-vit-b-16"
       ]
+    },
+    {
+      "id": "analysisCommand",
+      "type": "pickString",
+      "description": "Select the analysis command",
+      "options": [
+        "path-distance"
+      ]
+    },
+    {
+      "id": "synsetQuery",
+      "type": "promptString",
+      "description": "Enter an ImageNet label or synonym",
+      "default": "goldfish"
+    },
+    {
+      "id": "synsetId",
+      "type": "promptString",
+      "description": "Enter a synset id",
+      "default": "n01443537"
     }
   ]
 }

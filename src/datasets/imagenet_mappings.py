@@ -7,10 +7,10 @@ from .imagenet import load_imagenet_1k_synsets
 
 
 def load_imagenet_id_to_wnid(meta_path: Path) -> dict[int, str]:
-    return {
-        synset.imagenet_id: synset.wnid
-        for synset in load_imagenet_1k_synsets(meta_path)
-    }
+    imagenet_id_to_wnid: dict[int, str] = {}
+    for synset in load_imagenet_1k_synsets(meta_path):
+        imagenet_id_to_wnid[synset.imagenet_id] = synset.wnid
+    return imagenet_id_to_wnid
 
 
 def load_validation_wnids(
@@ -18,12 +18,15 @@ def load_validation_wnids(
     ground_truth_path: Path,
 ) -> list[str]:
     imagenet_id_to_wnid = load_imagenet_id_to_wnid(meta_path)
-    validation_ids = [
-        int(line.strip())
-        for line in ground_truth_path.read_text(encoding="utf-8").splitlines()
-        if line.strip()
-    ]
-    validation_wnids = [imagenet_id_to_wnid[imagenet_id] for imagenet_id in validation_ids]
+    validation_ids: list[int] = []
+    for line in ground_truth_path.read_text(encoding="utf-8").splitlines():
+        stripped_line = line.strip()
+        if stripped_line:
+            validation_ids.append(int(stripped_line))
+
+    validation_wnids: list[str] = []
+    for imagenet_id in validation_ids:
+        validation_wnids.append(imagenet_id_to_wnid[imagenet_id])
     if len(validation_wnids) != 50000:
         raise RuntimeError(
             "Expected 50000 ImageNet validation labels in "
