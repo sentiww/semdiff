@@ -92,10 +92,12 @@ def _write_batch_predictions(
 ) -> None:
     batch_size = len(top1_indices)
     for item_index in range(batch_size):
-        image_path, _ = image_dataset.samples[sample_offset + item_index]
+        sample_id = sample_offset + item_index
+        image_path, _ = image_dataset.samples[sample_id]
         predicted_index = int(top1_indices[item_index])
         write_prediction_record(
             predictions_file,
+            sample_id=sample_id,
             dataset_path=dataset_path,
             image_path=image_path,
             categories=categories,

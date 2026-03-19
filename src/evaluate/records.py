@@ -9,6 +9,7 @@ from typing import Sequence
 def write_prediction_record(
     predictions_file: Any,
     *,
+    sample_id: int,
     dataset_path: Path,
     image_path: str,
     categories: Sequence[str],
@@ -17,6 +18,7 @@ def write_prediction_record(
     confidence: float,
 ) -> None:
     record = {
+        "id": sample_id,
         "image": str(Path(image_path).relative_to(dataset_path)),
         "target_synset": Path(image_path).parent.name,
         "predicted_synset": index_to_synset[predicted_index],

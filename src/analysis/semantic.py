@@ -7,7 +7,8 @@ from statistics import mean, median
 from typing import Any
 from typing import Callable
 
-from evaluate.paths import OUTPUT_ROOT
+from evaluate.paths import PROCESSED_OUTPUT_ROOT
+from evaluate.paths import RAW_OUTPUT_ROOT
 from wordnet import path_distance, path_similarity, wup_similarity
 
 LOGGER = logging.getLogger("main.analysis")
@@ -102,13 +103,16 @@ def build_semantic_metrics(
     *,
     logger: logging.Logger = LOGGER,
 ) -> Path:
-    output_path = OUTPUT_ROOT / model_name / dataset_name
-    predictions_path = output_path / "predictions.jsonl"
-    annotated_path = output_path / "semantics.jsonl"
-    summary_path = output_path / "semantic-summary.json"
+    raw_output_path = RAW_OUTPUT_ROOT / model_name / dataset_name
+    processed_output_path = PROCESSED_OUTPUT_ROOT / model_name / dataset_name
+    predictions_path = raw_output_path / "predictions.jsonl"
+    annotated_path = processed_output_path / "semantics.jsonl"
+    summary_path = processed_output_path / "semantic-summary.json"
 
     if not predictions_path.exists():
         raise FileNotFoundError(f"Missing predictions file: {predictions_path}")
+
+    processed_output_path.mkdir(parents=True, exist_ok=True)
 
     metrics = build_metric_functions(logger)
     num_records = 0
@@ -130,7 +134,9 @@ def build_semantic_metrics(
             target_synset = str(record["target_synset"])
             predicted_synset = str(record["predicted_synset"])
 
-            enriched_record: dict[str, Any] = dict(record)
+            enriched_record: dict[str, Any] = {
+                "id": int(record["id"]),
+            }
             for metric_name, metric_fn in metrics:
                 metric_value = metric_fn(target_synset, predicted_synset)
                 enriched_record[metric_name] = metric_value
@@ -140,7 +146,7 @@ def build_semantic_metrics(
                 metric_values[metric_name].append(metric_value)
                 examples[metric_name].append(
                     {
-                        "image": str(record["image"]),
+                        "id": int(record["id"]),
                         "target_synset": target_synset,
                         "predicted_synset": predicted_synset,
                         metric_name: metric_value,

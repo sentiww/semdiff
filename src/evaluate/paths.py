@@ -7,6 +7,8 @@ from pathlib import Path
 LOGGER = logging.getLogger("main.evaluate")
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 OUTPUT_ROOT = PROJECT_ROOT / "output"
+RAW_OUTPUT_ROOT = OUTPUT_ROOT / "raw"
+PROCESSED_OUTPUT_ROOT = OUTPUT_ROOT / "processed"
 PROGRESS_LOG_EVERY_BATCHES = 10
 
 
@@ -18,7 +20,7 @@ class EvaluationOutputPaths:
 
 
 def resolve_output_paths(model_name: str, dataset_name: str) -> EvaluationOutputPaths:
-    output_path = OUTPUT_ROOT / model_name / dataset_name
+    output_path = RAW_OUTPUT_ROOT / model_name / dataset_name
     return EvaluationOutputPaths(
         output_path=output_path,
         predictions_path=output_path / "predictions.jsonl",

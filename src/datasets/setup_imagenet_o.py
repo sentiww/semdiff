@@ -13,7 +13,7 @@ from nltk.corpus import wordnet as wn
 from .common import IMAGENET_O_ROOT
 
 IMAGENET_O_URL = "https://people.eecs.berkeley.edu/~hendrycks/imagenet-o.tar"
-_IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".ppm", ".bmp", ".pgm", ".tif", ".tiff", ".webp"}
+_IMAGE_SUFFIXES = {".jpeg"}
 _SYNSET_DIR_PATTERN = re.compile(r"n\d+$")
 _PREDICTION_SCORE_SUFFIX = re.compile(r"_[0-9]+(?:\.[0-9]+)?$")
 
@@ -35,7 +35,9 @@ def init_dataset(*, logger: logging.Logger) -> None:
         _clear_generated_synset_dirs()
         count = 0
 
-        logger.info("Reorganizing imagenet-o images into synset folders at %s", IMAGENET_O_ROOT)
+        logger.info(
+            "Reorganizing imagenet-o images into synset folders at %s", IMAGENET_O_ROOT
+        )
         for image_path in sorted(extraction_root.rglob("*")):
             if not image_path.is_file():
                 continue
@@ -119,7 +121,9 @@ def _decode_image_name_to_synset_id(
             len(direct_matches),
         )
         return synset_id
-    raise RuntimeError(f"Could not decode synset id from imagenet-o filename stem: {stem!r}")
+    raise RuntimeError(
+        f"Could not decode synset id from imagenet-o filename stem: {stem!r}"
+    )
 
 
 def _normalize_label(value: str) -> str:
