@@ -3,4 +3,4 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-python src/__main__.py "$@"
+python src/main.py "$@"

@@ -1,16 +1,28 @@
 from __future__ import annotations
 
-import logging
-import sys
+import logging.config
 
 
-def configure_logging(verbose: bool = False) -> None:
-    level = logging.DEBUG if verbose else logging.INFO
-    logging.basicConfig(
-        level=level,
-        format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        stream=sys.stdout,
-        force=True,
+def configure_logging(level: str = "INFO") -> None:
+    logging.config.dictConfig(
+        {
+            "version": 1,
+            "disable_existing_loggers": False,
+            "formatters": {
+                "standard": {
+                    "format": "%(asctime)s %(levelname)s %(name)s %(message)s",
+                },
+            },
+            "handlers": {
+                "console": {
+                    "class": "logging.StreamHandler",
+                    "formatter": "standard",
+                    "level": level,
+                },
+            },
+            "root": {
+                "handlers": ["console"],
+                "level": level,
+            },
+        }
     )
-    logging.getLogger("PIL").setLevel(logging.INFO)
