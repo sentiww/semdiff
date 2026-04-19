@@ -25,6 +25,11 @@ def register(container_factory: Callable[[], VisualizationContainer]) -> typer.T
             "--output",
             help="Image path or output directory for the matplotlib visualization",
         ),
+        mode: str = typer.Option(
+            "overlay",
+            "--mode",
+            help="Comparison mode: overlay histograms or plot series side-by-side",
+        ),
         series: str | None = typer.Option(
             None,
             "--series",
@@ -64,6 +69,7 @@ def register(container_factory: Callable[[], VisualizationContainer]) -> typer.T
             DistributionInput(
                 analysis_results=tuple(input),
                 output=output,
+                mode=mode,
                 series=series,
                 field=field,
                 labels=tuple(label) if label is not None else None,

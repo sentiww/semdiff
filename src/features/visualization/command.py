@@ -13,6 +13,7 @@ from features.visualization.models import VisualizationReport
 class DistributionInput:
     analysis_results: tuple[Path, ...]
     output: Path
+    mode: str
     series: str | None
     field: str | None
     labels: tuple[str, ...] | None
@@ -37,6 +38,7 @@ class DistributionHandler:
         report = self._visualization_service.save_distribution_plot(
             analysis_result_paths=cmd.analysis_results,
             output_path=cmd.output,
+            mode=cmd.mode,
             series_name=cmd.series,
             field_name=cmd.field,
             source_labels=cmd.labels,

@@ -3,6 +3,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+DistributionMode = str
+
 
 @dataclass(frozen=True)
 class PlotLabels:
@@ -24,6 +26,7 @@ class NumericSeries:
 class DistributionPlotSpec:
     analysis_type: str
     series_name: str
+    mode: DistributionMode
     labels: PlotLabels
     series: tuple[NumericSeries, ...]
 

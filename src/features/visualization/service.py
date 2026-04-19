@@ -27,6 +27,7 @@ class VisualizationService:
         *,
         analysis_result_paths: tuple[Path, ...],
         output_path: Path,
+        mode: str = "overlay",
         series_name: str | None = None,
         field_name: str | None = None,
         source_labels: tuple[str, ...] | None = None,
@@ -47,6 +48,7 @@ class VisualizationService:
         )
         plot_spec = build_distribution_plot_spec(
             series_data=series_data,
+            mode=mode,
             source_labels=source_labels,
             title=title,
             x_label=x_label,

@@ -4,10 +4,13 @@ from pathlib import Path
 
 from features.visualization.models import DistributionPlotSpec, NumericSeries, PlotLabels
 
+_DISTRIBUTION_MODES = frozenset({"overlay", "side-by-side"})
+
 
 def build_distribution_plot_spec(
     *,
     series_data: tuple[NumericSeries, ...],
+    mode: str = "overlay",
     source_labels: tuple[str, ...] | None = None,
     title: str | None = None,
     x_label: str | None = None,
@@ -15,6 +18,10 @@ def build_distribution_plot_spec(
 ) -> DistributionPlotSpec:
     if not series_data:
         raise ValueError("At least one numeric series is required")
+    if mode not in _DISTRIBUTION_MODES:
+        raise ValueError(
+            f"Unsupported distribution mode {mode!r}; expected one of {sorted(_DISTRIBUTION_MODES)}"
+        )
     if source_labels is not None and len(source_labels) != len(series_data):
         raise ValueError("The number of source labels must match the number of input series")
 
@@ -47,6 +54,7 @@ def build_distribution_plot_spec(
     return DistributionPlotSpec(
         analysis_type=first.analysis_type,
         series_name=first.series_name,
+        mode=mode,
         labels=labels,
         series=tuple(customized_series),
     )

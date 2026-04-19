@@ -21,8 +21,10 @@ class SynsetIdHandler:
 
     def __call__(self, cmd: SynsetIdInput) -> SynsetIdOutput:
         synset_ids = self._wordnet.lookup_synset_ids(cmd.query)
+
         if not synset_ids:
             raise ValueError(f"No synset id found for {cmd.query!r}")
+
         return SynsetIdOutput(synset_ids=synset_ids)
 
 
@@ -42,8 +44,10 @@ class SynsetReadableHandler:
 
     def __call__(self, cmd: SynsetReadableInput) -> SynsetReadableOutput:
         labels = self._wordnet.lookup_labels(cmd.synset_id)
+
         if not labels:
             raise ValueError(f"No labels found for synset id {cmd.synset_id!r}")
+
         return SynsetReadableOutput(labels=labels)
 
 
