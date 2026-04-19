@@ -1,21 +1,43 @@
-import typer
+from __future__ import annotations
+
+from collections.abc import Callable
 from pathlib import Path
-from bootstrap.container import Container
+from typing import TYPE_CHECKING
 
-from application.commands.evaluate import Input
+import typer
 
-analysis_app = typer.Typer(help="Evaluate operations")
+if TYPE_CHECKING:
+    from bootstrap.container import EvaluationContainer
+
+evaluate_app = typer.Typer(help="Evaluate models against a synset-folder dataset")
 
 
-def register(container: Container) -> typer.Typer:
-    @analysis_app.command("evaluate")
+def register(container_factory: Callable[[], EvaluationContainer]) -> typer.Typer:
+    @evaluate_app.command("run")
     def evaluate(
-        model: str = typer.Option(None, "--model"),
-        dataset: Path = typer.Option(None, "--dataset"),
-        output: Path = typer.Option(None, "--output"),
+        model: str = typer.Option(..., "--model", help="Model name to evaluate"),
+        input: Path = typer.Option(
+            ...,
+            "--input",
+            help="Path to a dataset organized as synset folders",
+        ),
+        output: Path = typer.Option(
+            ...,
+            "--output",
+            help="Directory where predictions.jsonl and summary.json will be written",
+        ),
     ) -> None:
-        handler = container.evaluate_handler()
-        result = handler(Input(model=model, dataset=dataset, output=output))
-        typer.echo(f"Created user {result.user_id} at {result.created_at}")
+        from features.evaluation.command import Input
 
-    return analysis_app
+        container = container_factory()
+        handler = container.evaluate_handler()
+        result = handler(Input(model=model, dataset=input, output=output))
+        typer.echo(
+            "Evaluated "
+            f"{result.model} on {result.dataset} "
+            f"({result.num_samples} samples, device={result.device})\n"
+            f"predictions: {result.predictions_path}\n"
+            f"summary: {result.summary_path}"
+        )
+
+    return evaluate_app

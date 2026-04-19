@@ -1,6 +1,8 @@
 {
   "name": "semdiff",
-  "image": "mcr.microsoft.com/devcontainers/python:3.11",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
   "features": {
     "ghcr.io/devcontainers/features/python:1": {
       "version": "3.11"
@@ -28,6 +30,10 @@
         "[markdown]": {
           "editor.defaultFormatter": "esbenp.prettier-vscode",
           "editor.formatOnSave": true
+        },
+        "[latex]": {
+          "editor.defaultFormatter": "James-Yu.latex-workshop",
+          "editor.formatOnSave": true
         }
       },
       "extensions": [
@@ -36,7 +42,8 @@
         "ms-python.vscode-pylance",
         "ms-python.black-formatter",
         "mkhl.shfmt",
-        "esbenp.prettier-vscode"
+        "esbenp.prettier-vscode",
+        "James-Yu.latex-workshop"
       ]
     }
   },
