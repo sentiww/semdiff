@@ -7,4 +7,5 @@ torch
 torchvision
 open_clip_torch
 dependency-injector
+pydantic-settings
 typer
