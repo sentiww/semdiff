@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 import typer
 
+from bootstrap.containers import create_container
 from cli.groups.analysis import register as register_analysis
 from cli.groups.dataset import register as register_dataset
 from cli.groups.evaluate import register as register_evaluate
@@ -14,65 +15,16 @@ from cli.groups.visualization import register as register_visualization
 from cli.groups.wordnet import register as register_wordnet
 
 if TYPE_CHECKING:
-    from bootstrap import (
-        AnalysisContainer,
-        AppConfig,
-        DatasetContainer,
-        EvaluationContainer,
-        SynsetContainer,
-        VisualizationContainer,
-        WordNetContainer,
-    )
+    from bootstrap import AppSettings, ApplicationContainer
+
+container = create_container()
 
 
 @lru_cache(maxsize=1)
-def build_app_config() -> AppConfig:
-    from bootstrap import AppConfig
+def build_app_config() -> AppSettings:
+    from bootstrap import AppSettings
 
-    project_root = Path(__file__).resolve().parents[2]
-    return AppConfig.default(project_root)
-
-
-@lru_cache(maxsize=1)
-def build_dataset_container() -> DatasetContainer:
-    from bootstrap import DatasetContainer
-
-    return DatasetContainer()
-
-
-@lru_cache(maxsize=1)
-def build_analysis_container() -> AnalysisContainer:
-    from bootstrap import AnalysisContainer
-
-    return AnalysisContainer()
-
-
-@lru_cache(maxsize=1)
-def build_evaluation_container() -> EvaluationContainer:
-    from bootstrap import EvaluationContainer
-
-    return EvaluationContainer(build_app_config())
-
-
-@lru_cache(maxsize=1)
-def build_wordnet_container() -> WordNetContainer:
-    from bootstrap import WordNetContainer
-
-    return WordNetContainer()
-
-
-@lru_cache(maxsize=1)
-def build_synset_container() -> SynsetContainer:
-    from bootstrap import SynsetContainer
-
-    return SynsetContainer()
-
-
-@lru_cache(maxsize=1)
-def build_visualization_container() -> VisualizationContainer:
-    from bootstrap import VisualizationContainer
-
-    return VisualizationContainer()
+    return AppSettings()
 
 
 def build_app() -> typer.Typer:
@@ -82,37 +34,37 @@ def build_app() -> typer.Typer:
     )
 
     app.add_typer(
-        register_dataset(build_dataset_container),
+        register_dataset(container),
         name="dataset",
         help="Dataset management commands",
     )
 
     app.add_typer(
-        register_analysis(build_analysis_container),
+        register_analysis(container),
         name="analysis",
         help="Analysis management commands",
     )
 
     app.add_typer(
-        register_evaluate(build_evaluation_container),
+        register_evaluate(container),
         name="evaluate",
         help="Model evaluation commands",
     )
 
     app.add_typer(
-        register_wordnet(build_wordnet_container),
+        register_wordnet(container),
         name="wordnet",
         help="WordNet management commands",
     )
 
     app.add_typer(
-        register_synset(build_synset_container),
+        register_synset(container),
         name="synset",
         help="Synset lookup commands",
     )
 
     app.add_typer(
-        register_visualization(build_visualization_container),
+        register_visualization(container),
         name="visualization",
         help="Visualization commands",
     )

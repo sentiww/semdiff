@@ -1,23 +1,18 @@
 from __future__ import annotations
 
-from collections.abc import Callable
-from typing import TYPE_CHECKING
-
 import typer
 
-if TYPE_CHECKING:
-    from bootstrap import WordNetContainer
+from bootstrap.containers import ApplicationContainer
 
 wordnet_app = typer.Typer(help="WordNet commands")
 
 
-def register(container_factory: Callable[[], WordNetContainer]) -> typer.Typer:
+def register(container: ApplicationContainer) -> typer.Typer:
     @wordnet_app.command("init")
     def wordnet_init() -> None:
-        from features.wordnet.handlers import WordNetHandlers, WordNetInitInput
+        from semdiff.wordnet.handlers import WordNetHandlers, WordNetInitInput
 
-        container = container_factory()
-        handlers = WordNetHandlers(wordnet=container._wordnet)
+        handlers = container.wordnet_handlers()
         handler = handlers.create_init()
         result = handler(WordNetInitInput())
         if result.downloaded:

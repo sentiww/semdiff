@@ -1,19 +1,7 @@
-from bootstrap.config import AppConfig
-from bootstrap.containers import (
-    AnalysisContainer,
-    DatasetContainer,
-    EvaluationContainer,
-    SynsetContainer,
-    VisualizationContainer,
-    WordNetContainer,
-)
+from bootstrap.config import AppSettings
+from bootstrap.containers import ApplicationContainer
 
 __all__ = [
-    "AnalysisContainer",
-    "AppConfig",
-    "DatasetContainer",
-    "EvaluationContainer",
-    "SynsetContainer",
-    "VisualizationContainer",
-    "WordNetContainer",
+    "AppSettings",
+    "ApplicationContainer",
 ]

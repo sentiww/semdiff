@@ -1,15 +1,12 @@
 from __future__ import annotations
 
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import typer
 
+from bootstrap.containers import ApplicationContainer
 from config.datasets import DatasetSettings
-
-if TYPE_CHECKING:
-    from bootstrap import DatasetContainer
 
 dataset_app = typer.Typer(help="Dataset operations")
 init_app = typer.Typer(help="Initialize datasets")
@@ -30,7 +27,7 @@ def _normalize_image_suffixes(image_suffixes: Sequence[str] | None) -> tuple[str
     return tuple(suffix.lower() for suffix in suffixes)
 
 
-def register(container_factory: Callable[[], DatasetContainer]) -> typer.Typer:
+def register(container: ApplicationContainer) -> typer.Typer:
     @init_app.command("imagenet-o")
     def init_imagenet_o(
         input: str = typer.Option(
@@ -42,17 +39,9 @@ def register(container_factory: Callable[[], DatasetContainer]) -> typer.Typer:
         image_suffixes: list[str] | None = typer.Option(None, "--image-suffixes"),
         class_map_path: Path | None = typer.Option(None, "--class-map-path"),
     ) -> None:
-        from features.datasets.handlers import DatasetHandlers, ImageNetOInitInput
+        from semdiff.datasets.handlers import ImageNetOInitInput
 
-        container = container_factory()
-        handlers = DatasetHandlers(
-            archive_fetcher=container.archive_fetcher,
-            archive_extractor=container.archive_extractor,
-            output_preparer=container.output_preparer,
-            file_mover=container.file_mover,
-            index_parser=container.index_parser,
-            imagenet_metadata_service=container._imagenet_metadata_service,
-        )
+        handlers = container.dataset_handlers()
         handler = handlers.create_imagenet_o_init()
         handler(
             ImageNetOInitInput(
@@ -78,17 +67,9 @@ def register(container_factory: Callable[[], DatasetContainer]) -> typer.Typer:
         meta_path: Path | None = typer.Option(None, "--meta-filename"),
         ground_truth_path: Path | None = typer.Option(None, "--ground-truth-filename"),
     ) -> None:
-        from features.datasets.handlers import DatasetHandlers, ImageNet1KInitInput
+        from semdiff.datasets.handlers import ImageNet1KInitInput
 
-        container = container_factory()
-        handlers = DatasetHandlers(
-            archive_fetcher=container.archive_fetcher,
-            archive_extractor=container.archive_extractor,
-            output_preparer=container.output_preparer,
-            file_mover=container.file_mover,
-            index_parser=container.index_parser,
-            imagenet_metadata_service=container._imagenet_metadata_service,
-        )
+        handlers = container.dataset_handlers()
         handler = handlers.create_imagenet_1k_init()
         handler(
             ImageNet1KInitInput(

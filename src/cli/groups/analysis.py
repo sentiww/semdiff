@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import typer
 
-if TYPE_CHECKING:
-    from bootstrap import AnalysisContainer
+from bootstrap.containers import ApplicationContainer
 
 analysis_app = typer.Typer(help="Analysis operations")
 
 
-def register(container_factory: Callable[[], AnalysisContainer]) -> typer.Typer:
+def register(container: ApplicationContainer) -> typer.Typer:
     @analysis_app.command("semantic")
     def analysis_semantic(
         metric: str = typer.Option(..., "--metric", help="Semantic metric to compute"),
@@ -37,13 +34,9 @@ def register(container_factory: Callable[[], AnalysisContainer]) -> typer.Typer:
             help="Only analyze prediction records with this exact predicted synset id",
         ),
     ) -> None:
-        from features.wordnet.analysis import AnalysisHandlers, SemanticAnalysisInput
+        from semdiff.wordnet.analysis import SemanticAnalysisInput
 
-        container = container_factory()
-        handlers = AnalysisHandlers(
-            wordnet=container._wordnet,
-            semantic_analysis_service=container.semantic_analysis_service,
-        )
+        handlers = container.analysis_handlers()
         handler = handlers.create_semantic()
         result = handler(
             SemanticAnalysisInput(
@@ -78,16 +71,9 @@ def register(container_factory: Callable[[], AnalysisContainer]) -> typer.Typer:
             help="Swap target and predicted (count predicted->target instead of target->predicted)",
         ),
     ) -> None:
-        from features.wordnet.analysis import (
-            AnalysisHandlers,
-            ConfusionAnalysisInput,
-        )
+        from semdiff.wordnet.analysis import ConfusionAnalysisInput
 
-        container = container_factory()
-        handlers = AnalysisHandlers(
-            wordnet=container._wordnet,
-            semantic_analysis_service=container.semantic_analysis_service,
-        )
+        handlers = container.analysis_handlers()
         handler = handlers.create_confusions()
         result = handler(
             ConfusionAnalysisInput(

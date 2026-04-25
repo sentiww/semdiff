@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-from collections.abc import Callable
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 import typer
 
-if TYPE_CHECKING:
-    from bootstrap import VisualizationContainer
+from bootstrap.containers import ApplicationContainer
 
 visualization_app = typer.Typer(help="Visualization commands")
 
 
-def register(container_factory: Callable[[], VisualizationContainer]) -> typer.Typer:
+def register(container: ApplicationContainer) -> typer.Typer:
     @visualization_app.command("distribution")
     def distribution(
         input: list[Path] = typer.Option(
@@ -61,12 +58,9 @@ def register(container_factory: Callable[[], VisualizationContainer]) -> typer.T
             help="Override the Y axis label",
         ),
     ) -> None:
-        from features.visualization.handlers import DistributionInput, VisualizationHandlers
+        from semdiff.visualization.handlers import DistributionInput
 
-        container = container_factory()
-        handlers = VisualizationHandlers(
-            visualization_service=container.visualization_service,
-        )
+        handlers = container.visualization_handlers()
         handler = handlers.create_distribution()
         result = handler(
             DistributionInput(
