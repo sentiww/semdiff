@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 import re
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from statistics import mean, median
@@ -10,11 +11,13 @@ from typing import Protocol
 from features.files import (
     AnalysisResult,
     FileStore,
+    GroupedConfusions,
     JsonObject,
     JsonValue,
     PredictionRecord,
     SemanticAnalysisRecord,
 )
+from features.handlers.base import CommandInput, CommandOutput, Handler, HandlerFactory
 from features.wordnet.service import WordNetService
 
 logger = logging.getLogger(__name__)
@@ -190,6 +193,63 @@ class SemanticAnalysisService:
             num_records=num_records,
         )
 
+    def analyze_confusions(
+        self,
+        *,
+        predictions_path: Path,
+        output_path: Path,
+        reverse: bool = False,
+    ) -> int:
+        logger.info(
+            "Starting confusion analysis for predictions=%s reverse=%s",
+            predictions_path,
+            reverse,
+        )
+        confusions: Counter[tuple[str, str]] = Counter()
+        num_records = 0
+
+        for record in self._file_store.open_source(
+            PredictionRecord, predictions_path
+        ):
+            confusions[(record.target, record.predicted)] += 1
+            num_records += 1
+
+            if num_records % _ANALYSIS_PROGRESS_EVERY == 0:
+                logger.info(
+                    "Processed %s records for confusion analysis",
+                    num_records,
+                )
+
+        grouped: dict[str, dict[str, int]] = {}
+        for (target, predicted), count in confusions.items():
+            if reverse:
+                source, other = predicted, target
+            else:
+                source, other = target, predicted
+            if source not in grouped:
+                grouped[source] = {}
+            grouped[source][other] = count
+
+        for source in grouped:
+            grouped[source] = dict(
+                sorted(grouped[source].items(), key=lambda x: x[1], reverse=True)
+            )
+
+        with self._file_store.open_sink(
+            GroupedConfusions, output_path
+        ) as confusion_sink:
+            confusion_sink.write(grouped)
+
+        num_unique_sources = len(grouped)
+        logger.info(
+            "Completed confusion analysis: %s unique sources, %s total confusion pairs from %s records, output=%s",
+            num_unique_sources,
+            len(confusions),
+            num_records,
+            output_path,
+        )
+        return num_unique_sources
+
 
 def summarize_values(values: list[int | float]) -> dict[str, float | int | None]:
     if not values:
@@ -343,7 +403,7 @@ def _sanitize_file_component(value: str) -> str:
 
 
 @dataclass(frozen=True)
-class SemanticAnalysisInput:
+class SemanticAnalysisInput(CommandInput):
     metric: str
     predictions_path: Path
     output_directory: Path
@@ -352,14 +412,14 @@ class SemanticAnalysisInput:
 
 
 @dataclass(frozen=True)
-class SemanticAnalysisOutput:
+class SemanticAnalysisOutput(CommandOutput):
     metric: str
     annotated_path: Path
     summary_path: Path
     num_records: int
 
 
-class SemanticAnalysisHandler:
+class SemanticAnalysisHandler(Handler[SemanticAnalysisInput, SemanticAnalysisOutput]):
     analysis: str = "semantic"
 
     def __init__(
@@ -390,4 +450,57 @@ class SemanticAnalysisHandler:
             annotated_path=report.annotated_path,
             summary_path=report.summary_path,
             num_records=report.num_records,
+        )
+
+
+class AnalysisHandlers(HandlerFactory):
+    def __init__(
+        self,
+        wordnet: WordNetService,
+        semantic_analysis_service: SemanticAnalysisService,
+    ) -> None:
+        self._wordnet = wordnet
+        self._semantic_analysis_service = semantic_analysis_service
+
+    def create_semantic(self) -> SemanticAnalysisHandler:
+        return SemanticAnalysisHandler(
+            wordnet=self._wordnet,
+            semantic_analysis_service=self._semantic_analysis_service,
+        )
+
+    def create_confusions(self) -> ConfusionAnalysisHandler:
+        return ConfusionAnalysisHandler(
+            semantic_analysis_service=self._semantic_analysis_service,
+        )
+
+
+@dataclass(frozen=True)
+class ConfusionAnalysisInput(CommandInput):
+    predictions_path: Path
+    output_path: Path
+    reverse: bool = False
+
+
+@dataclass(frozen=True)
+class ConfusionAnalysisOutput(CommandOutput):
+    output_path: Path
+    num_confusions: int
+
+
+class ConfusionAnalysisHandler(Handler[ConfusionAnalysisInput, ConfusionAnalysisOutput]):
+    def __init__(
+        self,
+        semantic_analysis_service: SemanticAnalysisService,
+    ) -> None:
+        self._semantic_analysis_service = semantic_analysis_service
+
+    def __call__(self, cmd: ConfusionAnalysisInput) -> ConfusionAnalysisOutput:
+        num_confusions = self._semantic_analysis_service.analyze_confusions(
+            predictions_path=cmd.predictions_path,
+            output_path=cmd.output_path,
+            reverse=cmd.reverse,
+        )
+        return ConfusionAnalysisOutput(
+            output_path=cmd.output_path,
+            num_confusions=num_confusions,
         )

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 import typer
 
 if TYPE_CHECKING:
-    from bootstrap.container import SynsetContainer
+    from bootstrap import SynsetContainer
 
 synset_app = typer.Typer(help="Synset commands")
 
@@ -19,10 +19,11 @@ def register(container_factory: Callable[[], SynsetContainer]) -> typer.Typer:
             help="ImageNet label or synonym, for example 'goldfish'",
         ),
     ) -> None:
-        from features.wordnet.commands import SynsetIdInput
+        from features.wordnet.handlers import SynsetIdInput, WordNetHandlers
 
         container = container_factory()
-        handler = container.synset_id_handler()
+        handlers = WordNetHandlers(wordnet=container._wordnet)
+        handler = handlers.create_synset_id()
         result = handler(SynsetIdInput(query=query))
         for synset_value in result.synset_ids:
             typer.echo(synset_value)
@@ -34,10 +35,11 @@ def register(container_factory: Callable[[], SynsetContainer]) -> typer.Typer:
             help="Synset id, for example 'n01443537'",
         ),
     ) -> None:
-        from features.wordnet.commands import SynsetReadableInput
+        from features.wordnet.handlers import SynsetReadableInput, WordNetHandlers
 
         container = container_factory()
-        handler = container.synset_readable_handler()
+        handlers = WordNetHandlers(wordnet=container._wordnet)
+        handler = handlers.create_synset_readable()
         result = handler(SynsetReadableInput(synset_id=synset_id))
         for label in result.labels:
             typer.echo(label)

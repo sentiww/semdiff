@@ -1,4 +1,4 @@
-from features.files.codecs import EntityCodec, build_default_codecs
+from features.files.codecs import EntityCodec, GroupedConfusions, build_default_codecs
 from features.files.models import (
     AnalysisResult,
     EvaluationSummary,
@@ -8,6 +8,7 @@ from features.files.models import (
     PredictionRecord,
     SemanticAnalysisRecord,
 )
+from features.files.resolver import OutputPath, OutputPathResolver
 from features.files.store import EntitySink, EntitySource, FileStore
 
 __all__ = [
@@ -17,9 +18,12 @@ __all__ = [
     "EntitySource",
     "EvaluationSummary",
     "FileStore",
+    "GroupedConfusions",
     "JsonObject",
     "JsonScalar",
     "JsonValue",
+    "OutputPath",
+    "OutputPathResolver",
     "PredictionRecord",
     "SemanticAnalysisRecord",
     "build_default_codecs",

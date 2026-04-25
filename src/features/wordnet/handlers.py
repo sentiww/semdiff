@@ -2,20 +2,21 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from features.handlers.base import CommandInput, CommandOutput, Handler, HandlerFactory
 from features.wordnet.service import WordNetService
 
 
 @dataclass(frozen=True)
-class SynsetIdInput:
+class SynsetIdInput(CommandInput):
     query: str
 
 
 @dataclass(frozen=True)
-class SynsetIdOutput:
+class SynsetIdOutput(CommandOutput):
     synset_ids: list[str]
 
 
-class SynsetIdHandler:
+class SynsetIdHandler(Handler[SynsetIdInput, SynsetIdOutput]):
     def __init__(self, wordnet: WordNetService) -> None:
         self._wordnet = wordnet
 
@@ -29,16 +30,16 @@ class SynsetIdHandler:
 
 
 @dataclass(frozen=True)
-class SynsetReadableInput:
+class SynsetReadableInput(CommandInput):
     synset_id: str
 
 
 @dataclass(frozen=True)
-class SynsetReadableOutput:
+class SynsetReadableOutput(CommandOutput):
     labels: list[str]
 
 
-class SynsetReadableHandler:
+class SynsetReadableHandler(Handler[SynsetReadableInput, SynsetReadableOutput]):
     def __init__(self, wordnet: WordNetService) -> None:
         self._wordnet = wordnet
 
@@ -52,18 +53,32 @@ class SynsetReadableHandler:
 
 
 @dataclass(frozen=True)
-class WordNetInitInput:
+class WordNetInitInput(CommandInput):
     pass
 
 
 @dataclass(frozen=True)
-class WordNetInitOutput:
+class WordNetInitOutput(CommandOutput):
     downloaded: bool
 
 
-class WordNetInitHandler:
+class WordNetInitHandler(Handler[WordNetInitInput, WordNetInitOutput]):
     def __init__(self, wordnet: WordNetService) -> None:
         self._wordnet = wordnet
 
     def __call__(self, _: WordNetInitInput) -> WordNetInitOutput:
         return WordNetInitOutput(downloaded=self._wordnet.initialize())
+
+
+class WordNetHandlers(HandlerFactory):
+    def __init__(self, wordnet: WordNetService) -> None:
+        self._wordnet = wordnet
+
+    def create_synset_id(self) -> SynsetIdHandler:
+        return SynsetIdHandler(wordnet=self._wordnet)
+
+    def create_synset_readable(self) -> SynsetReadableHandler:
+        return SynsetReadableHandler(wordnet=self._wordnet)
+
+    def create_init(self) -> WordNetInitHandler:
+        return WordNetInitHandler(wordnet=self._wordnet)

@@ -15,6 +15,7 @@ from features.files import (
     EvaluationSummary,
     EntitySink,
     FileStore,
+    OutputPathResolver,
     PredictionRecord,
 )
 from features.datasets.metadata import ImageNetMetadataService
@@ -47,13 +48,6 @@ class EvaluationReport:
     device: str
 
 
-@dataclass(frozen=True)
-class EvaluationOutputPaths:
-    output_directory: Path
-    predictions_path: Path
-    summary_path: Path
-
-
 @dataclass
 class EvaluationTotals:
     total: int = 0
@@ -69,12 +63,14 @@ class ModelEvaluationService:
         file_store: FileStore,
         imagenet_metadata_service: ImageNetMetadataService,
         progress_log_every_batches: int = 10,
+        output_path_resolver: OutputPathResolver | None = None,
     ) -> None:
         self._image_dataset_factory = image_dataset_factory
         self._evaluation_runtime = evaluation_runtime
         self._file_store = file_store
         self._imagenet_metadata_service = imagenet_metadata_service
         self._progress_log_every_batches = progress_log_every_batches
+        self._output_path_resolver = output_path_resolver or OutputPathResolver(Path())
 
     def evaluate(
         self,
@@ -101,7 +97,13 @@ class ModelEvaluationService:
             model_name,
             class_index_maps=class_index_maps,
         )
-        output_paths = _resolve_output_paths(output_directory)
+        output_path_resolver = OutputPathResolver(output_directory)
+        predictions_path = output_path_resolver.resolve(
+            PredictionRecord, "predictions.jsonl"
+        ).path
+        summary_path = output_path_resolver.resolve(
+            EvaluationSummary, "summary.json"
+        ).path
         if len(class_index_maps.index_to_wnid) != len(spec.categories):
             raise RuntimeError(
                 "ImageNet class index does not match the model categories: "
@@ -138,13 +140,13 @@ class ModelEvaluationService:
         logger.info("Evaluating %s samples on %s", len(image_dataset), device)
         logger.info(
             "Writing predictions to %s and summary to %s",
-            output_paths.predictions_path,
-            output_paths.summary_path,
+            predictions_path,
+            summary_path,
         )
 
         with self._file_store.open_sink(
             PredictionRecord,
-            output_paths.predictions_path,
+            predictions_path,
         ) as prediction_sink:
             with torch.inference_mode():
                 for batch_number, (images, targets) in enumerate(dataloader, start=1):
@@ -187,7 +189,7 @@ class ModelEvaluationService:
                         )
         with self._file_store.open_sink(
             EvaluationSummary,
-            output_paths.summary_path,
+            summary_path,
         ) as summary_sink:
             summary_sink.write(
                 EvaluationSummary(
@@ -196,20 +198,20 @@ class ModelEvaluationService:
                     num_samples=totals.total,
                     device=str(device),
                     weights=spec.weights_name,
-                    predictions_path=output_paths.predictions_path,
+                    predictions_path=predictions_path,
                 )
             )
         logger.info(
             "Completed evaluation: wrote %s and %s in %.1fs",
-            output_paths.predictions_path,
-            output_paths.summary_path,
+            predictions_path,
+            summary_path,
             time.perf_counter() - started_at,
         )
         return EvaluationReport(
             model_name=spec.model_name,
             dataset_path=dataset_path,
-            predictions_path=output_paths.predictions_path,
-            summary_path=output_paths.summary_path,
+            predictions_path=predictions_path,
+            summary_path=summary_path,
             num_samples=totals.total,
             device=str(device),
         )
@@ -294,15 +296,6 @@ class ModelEvaluationService:
             samples_per_second,
             totals.comparable_total,
         )
-
-
-def _resolve_output_paths(output_directory: Path) -> EvaluationOutputPaths:
-    output_directory = Path(output_directory)
-    return EvaluationOutputPaths(
-        output_directory=output_directory,
-        predictions_path=output_directory / "predictions.jsonl",
-        summary_path=output_directory / "summary.json",
-    )
 
 
 def _relative_image_path(dataset_root: Path, image_path: str) -> str:

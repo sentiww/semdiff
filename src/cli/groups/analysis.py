@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import typer
 
 if TYPE_CHECKING:
-    from bootstrap.container import AnalysisContainer
+    from bootstrap import AnalysisContainer
 
 analysis_app = typer.Typer(help="Analysis operations")
 
@@ -37,10 +37,14 @@ def register(container_factory: Callable[[], AnalysisContainer]) -> typer.Typer:
             help="Only analyze prediction records with this exact predicted synset id",
         ),
     ) -> None:
-        from features.wordnet.analysis import SemanticAnalysisInput
+        from features.wordnet.analysis import AnalysisHandlers, SemanticAnalysisInput
 
         container = container_factory()
-        handler = container.analysis_semantic_handler()
+        handlers = AnalysisHandlers(
+            wordnet=container._wordnet,
+            semantic_analysis_service=container.semantic_analysis_service,
+        )
+        handler = handlers.create_semantic()
         result = handler(
             SemanticAnalysisInput(
                 metric=metric,
@@ -54,6 +58,47 @@ def register(container_factory: Callable[[], AnalysisContainer]) -> typer.Typer:
             f"Computed {result.metric} for {result.num_records} records\n"
             f"annotated: {result.annotated_path}\n"
             f"summary: {result.summary_path}"
+        )
+
+    @analysis_app.command("confusions")
+    def analysis_confusions(
+        input: Path = typer.Option(
+            ...,
+            "--input",
+            help="Input predictions.jsonl file",
+        ),
+        output: Path = typer.Option(
+            ...,
+            "--output",
+            help="Output .jsonl file",
+        ),
+        reverse: bool = typer.Option(
+            False,
+            "--reverse",
+            help="Swap target and predicted (count predicted->target instead of target->predicted)",
+        ),
+    ) -> None:
+        from features.wordnet.analysis import (
+            AnalysisHandlers,
+            ConfusionAnalysisInput,
+        )
+
+        container = container_factory()
+        handlers = AnalysisHandlers(
+            wordnet=container._wordnet,
+            semantic_analysis_service=container.semantic_analysis_service,
+        )
+        handler = handlers.create_confusions()
+        result = handler(
+            ConfusionAnalysisInput(
+                predictions_path=input,
+                output_path=output,
+                reverse=reverse,
+            )
+        )
+        typer.echo(
+            f"Found {result.num_confusions} unique confusions\n"
+            f"output: {result.output_path}"
         )
 
     return analysis_app

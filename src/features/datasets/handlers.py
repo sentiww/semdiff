@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import logging
 import re
+from collections.abc import Callable, Collection, Iterable
 from contextlib import contextmanager
-from collections.abc import Collection, Iterable
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -17,6 +17,7 @@ from features.datasets.filesystem import (
     UrlLibArchiveFetcher,
 )
 from features.datasets.metadata import ImageNetMetadataService, SynsetLabelMap
+from features.handlers.base import CommandInput, CommandOutput, Handler, HandlerFactory
 
 logger = logging.getLogger(__name__)
 _DATASET_PROGRESS_EVERY = 1000
@@ -25,23 +26,7 @@ _ARCHIVE_URL_SCHEMES = frozenset({"http", "https", "ftp", "file"})
 
 
 @dataclass(frozen=True)
-class DatasetClearInput:
-    dataset: str
-
-
-@dataclass(frozen=True)
-class DatasetClearOutput:
-    dataset: str
-
-
-class DatasetClearHandler:
-    def __call__(self, cmd: DatasetClearInput) -> DatasetClearOutput:
-        logger.info("Clearing %s dataset", cmd.dataset)
-        return DatasetClearOutput(dataset=cmd.dataset)
-
-
-@dataclass(frozen=True)
-class ImageNetOInitInput:
+class ImageNetOInitInput(CommandInput):
     archive_source: str
     output_directory: Path
     image_suffixes: tuple[str, ...]
@@ -49,11 +34,75 @@ class ImageNetOInitInput:
 
 
 @dataclass(frozen=True)
-class ImageNetOInitOutput:
+class ImageNetOInitOutput(CommandOutput):
     pass
 
 
-class ImageNetOInitHandler:
+@dataclass(frozen=True)
+class ImageNet1KInitInput(CommandInput):
+    archive_source: str
+    output_directory: Path
+    image_suffixes: tuple[str, ...]
+    meta_path: Path
+    ground_truth_path: Path
+
+
+@dataclass(frozen=True)
+class ImageNet1KInitOutput(CommandOutput):
+    pass
+
+
+class BaseDatasetInitHandler(Handler):
+    dataset: str = "base"
+
+    def __init__(
+        self,
+        archive_fetcher: UrlLibArchiveFetcher,
+        archive_extractor: TarArchiveExtractor,
+        file_mover: ShutilFileMover,
+        imagenet_metadata_service: ImageNetMetadataService,
+    ) -> None:
+        self._archive_fetcher = archive_fetcher
+        self._archive_extractor = archive_extractor
+        self._file_mover = file_mover
+        self._imagenet_metadata_service = imagenet_metadata_service
+
+    @contextmanager
+    def _materialize_archive(
+        self,
+        archive_source: str,
+        temp_root: Path,
+    ):
+        if _is_archive_url(archive_source):
+            download_dest = temp_root / f"{self.dataset}.tar"
+            self._archive_fetcher.fetch(archive_source, download_dest)
+            yield download_dest
+            return
+
+        archive_path = Path(archive_source)
+        logger.info("Using local archive %s", archive_path)
+        yield archive_path
+
+    def _move_with_progress(
+        self,
+        image_paths: list[Path],
+        resolve_dest: Callable[[Path], Path],
+    ) -> None:
+        total = len(image_paths)
+        for moved_count, image_path in enumerate(image_paths, start=1):
+            destination = resolve_dest(image_path)
+            self._file_mover.move(image_path, destination)
+            if moved_count % _DATASET_PROGRESS_EVERY == 0 or moved_count == total:
+                logger.info(
+                    "Initialized %s images for %s (%s/%s)",
+                    moved_count,
+                    self.dataset,
+                    moved_count,
+                    total,
+                )
+
+
+class ImageNetOInitHandler(BaseDatasetInitHandler):
     dataset: str = "imagenet-o"
 
     def __init__(
@@ -64,11 +113,13 @@ class ImageNetOInitHandler:
         file_mover: ShutilFileMover,
         imagenet_metadata_service: ImageNetMetadataService,
     ) -> None:
-        self._archive_fetcher = archive_fetcher
-        self._archive_extractor = archive_extractor
+        super().__init__(
+            archive_fetcher,
+            archive_extractor,
+            file_mover,
+            imagenet_metadata_service,
+        )
         self._output_preparer = output_preparer
-        self._file_mover = file_mover
-        self._imagenet_metadata_service = imagenet_metadata_service
 
     def __call__(self, cmd: ImageNetOInitInput) -> ImageNetOInitOutput:
         logger.info(
@@ -80,11 +131,10 @@ class ImageNetOInitHandler:
 
         with TemporaryDirectory() as tmp:
             tmp_root = Path(tmp)
-            extraction_root = tmp_root / "imagenet-o"
-            with _materialize_archive_path(
+            extraction_root = tmp_root / self.dataset
+            with self._materialize_archive(
                 cmd.archive_source,
-                archive_fetcher=self._archive_fetcher,
-                download_destination=tmp_root / "imagenet-o.tar",
+                tmp_root,
             ) as archive_path:
                 extraction_root.mkdir()
                 self._archive_extractor.extract(archive_path, extraction_root)
@@ -100,25 +150,17 @@ class ImageNetOInitHandler:
                 len(image_paths),
                 self.dataset,
             )
-            for moved_count, image_path in enumerate(image_paths, start=1):
-                synset_id = self._resolve_target_synset_id(
-                    image_path,
+
+            self._move_with_progress(
+                image_paths,
+                lambda img: cmd.output_directory
+                / self._resolve_target_synset_id(
+                    img,
                     extraction_root=extraction_root,
                     class_map=synset_label_map,
                 )
-                destination = cmd.output_directory / synset_id / image_path.name
-                self._file_mover.move(image_path, destination)
-                if (
-                    moved_count % _DATASET_PROGRESS_EVERY == 0
-                    or moved_count == len(image_paths)
-                ):
-                    logger.info(
-                        "Initialized %s images for %s (%s/%s)",
-                        moved_count,
-                        self.dataset,
-                        moved_count,
-                        len(image_paths),
-                    )
+                / img.name,
+            )
 
         logger.info("Initialized %s dataset", self.dataset)
         return ImageNetOInitOutput()
@@ -161,21 +203,7 @@ class ImageNetOInitHandler:
         )
 
 
-@dataclass(frozen=True)
-class ImageNet1KInitInput:
-    archive_source: str
-    output_directory: Path
-    image_suffixes: tuple[str, ...]
-    meta_path: Path
-    ground_truth_path: Path
-
-
-@dataclass(frozen=True)
-class ImageNet1KInitOutput:
-    pass
-
-
-class ImageNet1KInitHandler:
+class ImageNet1KInitHandler(BaseDatasetInitHandler):
     dataset: str = "imagenet-1k"
 
     def __init__(
@@ -186,11 +214,13 @@ class ImageNet1KInitHandler:
         index_parser: ImageNetValidationImageIndexParser,
         imagenet_metadata_service: ImageNetMetadataService,
     ) -> None:
-        self._archive_fetcher = archive_fetcher
-        self._archive_extractor = archive_extractor
-        self._file_mover = file_mover
+        super().__init__(
+            archive_fetcher,
+            archive_extractor,
+            file_mover,
+            imagenet_metadata_service,
+        )
         self._index_parser = index_parser
-        self._imagenet_metadata_service = imagenet_metadata_service
 
     def __call__(self, cmd: ImageNet1KInitInput) -> ImageNet1KInitOutput:
         logger.info(
@@ -202,11 +232,10 @@ class ImageNet1KInitHandler:
 
         with TemporaryDirectory() as tmp:
             tmp_root = Path(tmp)
-            extraction_root = tmp_root / "imagenet-1k"
-            with _materialize_archive_path(
+            extraction_root = tmp_root / self.dataset
+            with self._materialize_archive(
                 cmd.archive_source,
-                archive_fetcher=self._archive_fetcher,
-                download_destination=tmp_root / "imagenet-1k.tar",
+                tmp_root,
             ) as archive_path:
                 logger.info("Extracting validation archive from %s", archive_path)
                 self._archive_extractor.extract(archive_path, extraction_root)
@@ -227,44 +256,53 @@ class ImageNet1KInitHandler:
                 self.dataset,
             )
 
-            for moved_count, image_path in enumerate(image_paths, start=1):
-                index = self._index_parser.parse_index(image_path)
-                wnid = validation_wnids[index - 1]
-                destination = cmd.output_directory / wnid / image_path.name
-                self._file_mover.move(image_path, destination)
-                if (
-                    moved_count % _DATASET_PROGRESS_EVERY == 0
-                    or moved_count == len(image_paths)
-                ):
-                    logger.info(
-                        "Initialized %s validation images for %s (%s/%s)",
-                        moved_count,
-                        self.dataset,
-                        moved_count,
-                        len(image_paths),
-                    )
+            self._move_with_progress(
+                image_paths,
+                lambda img: cmd.output_directory
+                / validation_wnids[self._index_parser.parse_index(img) - 1]
+                / img.name,
+            )
 
         logger.info("Initialized %s dataset", self.dataset)
         return ImageNet1KInitOutput()
 
 
-@contextmanager
-def _materialize_archive_path(
-    archive_source: str,
-    *,
-    archive_fetcher: UrlLibArchiveFetcher,
-    download_destination: Path,
-):
-    if _is_archive_url(archive_source):
-        archive_fetcher.fetch(archive_source, download_destination)
-        yield download_destination
-        return
-
-    archive_path = Path(archive_source)
-    logger.info("Using local archive %s", archive_path)
-    yield archive_path
-
-
 def _is_archive_url(value: str) -> bool:
     parsed = urlparse(value)
     return parsed.scheme.lower() in _ARCHIVE_URL_SCHEMES and bool(parsed.path)
+
+
+class DatasetHandlers(HandlerFactory):
+    def __init__(
+        self,
+        archive_fetcher: UrlLibArchiveFetcher,
+        archive_extractor: TarArchiveExtractor,
+        output_preparer: GeneratedSynsetDirectoryPreparer,
+        file_mover: ShutilFileMover,
+        index_parser: ImageNetValidationImageIndexParser,
+        imagenet_metadata_service: ImageNetMetadataService,
+    ) -> None:
+        self._archive_fetcher = archive_fetcher
+        self._archive_extractor = archive_extractor
+        self._output_preparer = output_preparer
+        self._file_mover = file_mover
+        self._index_parser = index_parser
+        self._imagenet_metadata_service = imagenet_metadata_service
+
+    def create_imagenet_o_init(self) -> ImageNetOInitHandler:
+        return ImageNetOInitHandler(
+            archive_fetcher=self._archive_fetcher,
+            archive_extractor=self._archive_extractor,
+            output_preparer=self._output_preparer,
+            file_mover=self._file_mover,
+            imagenet_metadata_service=self._imagenet_metadata_service,
+        )
+
+    def create_imagenet_1k_init(self) -> ImageNet1KInitHandler:
+        return ImageNet1KInitHandler(
+            archive_fetcher=self._archive_fetcher,
+            archive_extractor=self._archive_extractor,
+            file_mover=self._file_mover,
+            index_parser=self._index_parser,
+            imagenet_metadata_service=self._imagenet_metadata_service,
+        )

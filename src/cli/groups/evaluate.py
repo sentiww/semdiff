@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import typer
 
 if TYPE_CHECKING:
-    from bootstrap.container import EvaluationContainer
+    from bootstrap import EvaluationContainer
 
 evaluate_app = typer.Typer(help="Evaluate models against a synset-folder dataset")
 
@@ -27,11 +27,16 @@ def register(container_factory: Callable[[], EvaluationContainer]) -> typer.Type
             help="Directory where predictions.jsonl and summary.json will be written",
         ),
     ) -> None:
-        from features.evaluation.command import Input
+        from features.evaluation.handlers import EvaluationHandlers, EvaluateInput
 
         container = container_factory()
-        handler = container.evaluate_handler()
-        result = handler(Input(model=model, dataset=input, output=output))
+        handlers = EvaluationHandlers(
+            evaluation_service=container.model_evaluation_service,
+            class_map_path=container._config.imagenet_class_map,
+            index_to_wnid_path=container._config.torchvision_index_to_wnid,
+        )
+        handler = handlers.create_evaluate()
+        result = handler(EvaluateInput(model=model, dataset=input, output=output))
         typer.echo(
             "Evaluated "
             f"{result.model} on {result.dataset} "

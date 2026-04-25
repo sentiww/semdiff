@@ -14,7 +14,7 @@ from cli.groups.visualization import register as register_visualization
 from cli.groups.wordnet import register as register_wordnet
 
 if TYPE_CHECKING:
-    from bootstrap.container import (
+    from bootstrap import (
         AnalysisContainer,
         AppConfig,
         DatasetContainer,
@@ -27,56 +27,50 @@ if TYPE_CHECKING:
 
 @lru_cache(maxsize=1)
 def build_app_config() -> AppConfig:
-    from bootstrap.container import AppConfig
+    from bootstrap import AppConfig
 
     project_root = Path(__file__).resolve().parents[2]
-    return AppConfig(
-        imagenet_class_map=(project_root / "mappings" / "imagenet-1k" / "class_map.json"),
-        torchvision_index_to_wnid=(project_root / "mappings" / "torchvision_index_to_wnid.json"),
-        evaluation_batch_size=32,
-        evaluation_num_workers=0,
-        evaluation_progress_log_every_batches=10,
-    )
+    return AppConfig.default(project_root)
 
 
 @lru_cache(maxsize=1)
 def build_dataset_container() -> DatasetContainer:
-    from bootstrap.container import DatasetContainer
+    from bootstrap import DatasetContainer
 
     return DatasetContainer()
 
 
 @lru_cache(maxsize=1)
 def build_analysis_container() -> AnalysisContainer:
-    from bootstrap.container import AnalysisContainer
+    from bootstrap import AnalysisContainer
 
     return AnalysisContainer()
 
 
 @lru_cache(maxsize=1)
 def build_evaluation_container() -> EvaluationContainer:
-    from bootstrap.container import EvaluationContainer
+    from bootstrap import EvaluationContainer
 
     return EvaluationContainer(build_app_config())
 
 
 @lru_cache(maxsize=1)
 def build_wordnet_container() -> WordNetContainer:
-    from bootstrap.container import WordNetContainer
+    from bootstrap import WordNetContainer
 
     return WordNetContainer()
 
 
 @lru_cache(maxsize=1)
 def build_synset_container() -> SynsetContainer:
-    from bootstrap.container import SynsetContainer
+    from bootstrap import SynsetContainer
 
     return SynsetContainer()
 
 
 @lru_cache(maxsize=1)
 def build_visualization_container() -> VisualizationContainer:
-    from bootstrap.container import VisualizationContainer
+    from bootstrap import VisualizationContainer
 
     return VisualizationContainer()
 

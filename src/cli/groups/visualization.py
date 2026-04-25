@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 import typer
 
 if TYPE_CHECKING:
-    from bootstrap.container import VisualizationContainer
+    from bootstrap import VisualizationContainer
 
 visualization_app = typer.Typer(help="Visualization commands")
 
@@ -61,10 +61,13 @@ def register(container_factory: Callable[[], VisualizationContainer]) -> typer.T
             help="Override the Y axis label",
         ),
     ) -> None:
-        from features.visualization.command import DistributionInput
+        from features.visualization.handlers import DistributionInput, VisualizationHandlers
 
         container = container_factory()
-        handler = container.distribution_handler()
+        handlers = VisualizationHandlers(
+            visualization_service=container.visualization_service,
+        )
+        handler = handlers.create_distribution()
         result = handler(
             DistributionInput(
                 analysis_results=tuple(input),

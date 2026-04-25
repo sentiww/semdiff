@@ -13,6 +13,8 @@ from features.files.models import (
     SemanticAnalysisRecord,
 )
 
+GroupedConfusions = dict[str, dict[str, int]]
+
 StoreEntity = TypeVar("StoreEntity")
 
 
@@ -55,11 +57,18 @@ def build_default_codecs() -> Mapping[type[object], EntityCodec[object]]:
         ensure_ascii=True,
         indent=2,
     )
+    grouped_confusions_codec: EntityCodec[GroupedConfusions] = EntityCodec(
+        entity_type=GroupedConfusions,
+        format_name="jsonl",
+        serialize=_serialize_grouped_confusions,
+        deserialize=_deserialize_grouped_confusions,
+    )
     return {
         PredictionRecord: cast(EntityCodec[object], prediction_codec),
         EvaluationSummary: cast(EntityCodec[object], evaluation_summary_codec),
         SemanticAnalysisRecord: cast(EntityCodec[object], semantic_record_codec),
         AnalysisResult: cast(EntityCodec[object], analysis_result_codec),
+        GroupedConfusions: cast(EntityCodec[object], grouped_confusions_codec),
     }
 
 
@@ -154,3 +163,14 @@ def _deserialize_analysis_result(payload: JsonObject) -> AnalysisResult:
         metadata=cast(JsonObject, metadata),
         values=values,
     )
+
+
+def _serialize_grouped_confusions(data: GroupedConfusions) -> JsonObject:
+    return dict(data)
+
+
+def _deserialize_grouped_confusions(payload: JsonObject) -> GroupedConfusions:
+    result: GroupedConfusions = {}
+    for source, confusions in payload.items():
+        result[str(source)] = {str(k): int(v) for k, v in confusions.items()}
+    return result

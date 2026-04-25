@@ -6,7 +6,7 @@ The project currently supports:
 
 - datasets: `imagenet-1k`, `imagenet-o`
 - models: `resnet`, `densenet`, `vgg`, `vit-b-16`, `clip-vit-b-16` (experimental)
-- analysis: WordNet based semantic metrics
+- analysis: WordNet based semantic metrics (path_distance, path_similarity, wup_similarity, lch_similarity, jcn_similarity, lin_similarity, res_similarity)
 
 ## What The Project Does
 
@@ -14,18 +14,6 @@ The workflow has two stages:
 
 1. Run model evaluation on a dataset.
 2. Run semantic analysis on the saved predictions.
-
-Evaluation writes raw outputs to:
-
-```text
-output/raw/<model>/<dataset>/
-```
-
-Analysis reads those raw predictions and writes processed outputs to:
-
-```text
-output/processed/<model>/<dataset>/
-```
 
 ## Setup
 
@@ -54,19 +42,19 @@ After that, you can run commands like:
 
 ```bash
 semdiff wordnet init
-semdiff evaluate resnet imagenet-o
+semdiff evaluate run --model resnet --input datasets/imagenet-o --output output/resnet-o
 ```
 
 If you prefer, you can still run commands directly with:
 
 ```bash
-python src/main.py ...
+python src/__main__.py evaluate run --model resnet --input datasets/imagenet-o --output output/resnet-o
 ```
 
 or:
 
 ```bash
-./src/semdiff.sh ...
+./src/semdiff.sh evaluate run --model resnet --input datasets/imagenet-o --output output/resnet-o
 ```
 
 ## Datasets
@@ -94,7 +82,7 @@ Required files:
 Then initialize synset folders:
 
 ```bash
-semdiff datasets init imagenet-1k
+semdiff datasets init imagenet-1k --input /path/to/archive.tar --output datasets/imagenet-1k
 ```
 
 This reorganizes the validation images into folders like:
@@ -111,7 +99,7 @@ ImageNet-O is downloaded automatically, but WordNet must be initialized first:
 
 ```bash
 semdiff wordnet init
-semdiff datasets init imagenet-o
+semdiff datasets init imagenet-o --input https://people.eecs.berkeley.edu/~hendrycks/imagenet-o.tar --output datasets/imagenet-o
 ```
 
 ## Commands
@@ -129,15 +117,8 @@ semdiff wordnet init
 Initialize a dataset:
 
 ```bash
-semdiff datasets init imagenet-1k
-semdiff datasets init imagenet-o
-```
-
-Clear generated synset folders for a dataset:
-
-```bash
-semdiff datasets clear imagenet-1k
-semdiff datasets clear imagenet-o
+semdiff datasets init imagenet-1k --input /path/to/val.tar --output datasets/imagenet-1k
+semdiff datasets init imagenet-o --input https://example.com/imagenet-o.tar --output datasets/imagenet-o
 ```
 
 ### Evaluation commands
@@ -145,62 +126,20 @@ semdiff datasets clear imagenet-o
 Run evaluation for a model and dataset:
 
 ```bash
-semdiff evaluate resnet imagenet-o
+semdiff evaluate run --model resnet --input datasets/imagenet-o --output output/resnet-o
 ```
+
+Available models: `resnet`, `densenet`, `vgg`, `vit-b-16`, `clip-vit-b-16`
 
 ### Analysis commands
 
-Build semantic metrics from raw prediction outputs:
+Build semantic metrics from prediction outputs:
 
 ```bash
-semdiff analysis semantic resnet imagenet-o
+semdiff analysis semantic --metric wup_similarity --input output/resnet-o/predictions.jsonl --output output/resnet-o-analysis
 ```
 
-## Output Layout
-
-### Raw evaluation output
-
-Evaluation writes to:
-
-```text
-output/raw/<model>/<dataset>/
-```
-
-Files:
-
-- `predictions.jsonl`
-- `summary.json`
-
-`predictions.jsonl` contains one record per sample. Each record includes:
-
-- `id`
-- `image`
-- `target_synset`
-- `predicted_synset`
-- `predicted_label`
-- `confidence`
-
-### Processed analysis output
-
-Analysis writes to:
-
-```text
-output/processed/<model>/<dataset>/
-```
-
-Files:
-
-- `semantics.jsonl`
-- `semantic-summary.json`
-
-`semantics.jsonl` contains one record per sample. Each record includes:
-
-- `id`
-- `path_distance`
-- `path_similarity`
-- `wup_similarity`
-
-`semantic-summary.json` contains aggregate statistics and example extremes for each metric.
+Available metrics: `path_distance`, `path_similarity`, `wup_similarity`, `lch_similarity`, `jcn_similarity`, `lin_similarity`, `res_similarity`
 
 ## Synset Utilities
 
@@ -214,6 +153,14 @@ Get readable labels for a synset id:
 
 ```bash
 semdiff synset readable n01443537
+```
+
+### Visualization commands
+
+Compare metric distributions across models or datasets:
+
+```bash
+semdiff visualization distribution --input output/resnet-o-analysis/semantic-wup_similarity.json --output output/distribution.png
 ```
 
 ## Notes

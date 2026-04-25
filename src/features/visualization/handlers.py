@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from features.handlers.base import CommandInput, CommandOutput, Handler, HandlerFactory
 from features.visualization.service import (
     VisualizationService,
 )
@@ -10,7 +11,7 @@ from features.visualization.models import VisualizationReport
 
 
 @dataclass(frozen=True)
-class DistributionInput:
+class DistributionInput(CommandInput):
     analysis_results: tuple[Path, ...]
     output: Path
     mode: str
@@ -23,14 +24,14 @@ class DistributionInput:
 
 
 @dataclass(frozen=True)
-class DistributionOutput:
+class DistributionOutput(CommandOutput):
     analysis_results: tuple[Path, ...]
     output: Path
     analysis_type: str
     series: str
 
 
-class DistributionHandler:
+class DistributionHandler(Handler[DistributionInput, DistributionOutput]):
     def __init__(self, visualization_service: VisualizationService) -> None:
         self._visualization_service = visualization_service
 
@@ -55,3 +56,11 @@ class DistributionHandler:
             analysis_type=report.analysis_type,
             series=report.series_name,
         )
+
+
+class VisualizationHandlers(HandlerFactory):
+    def __init__(self, visualization_service: VisualizationService) -> None:
+        self._visualization_service = visualization_service
+
+    def create_distribution(self) -> DistributionHandler:
+        return DistributionHandler(visualization_service=self._visualization_service)
