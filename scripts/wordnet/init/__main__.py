@@ -1,7 +1,7 @@
 import logging
 import sys
 
-import init
+import main
 
 if __name__ == "__main__":
     logging.basicConfig(
@@ -12,4 +12,4 @@ if __name__ == "__main__":
         force=True,
     )
 
-    init.run()
+    main.run()
