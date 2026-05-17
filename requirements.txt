@@ -6,3 +6,5 @@ scipy
 torch
 torchvision
 open_clip_torch
+plotly
+kaleido
