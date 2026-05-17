@@ -1,0 +1,222 @@
+\chapter{About the Template}
+\label{chapt:Przyklady}
+
+This chapter contains several tips that may help while writing your thesis,
+as well as examples of using LaTeX packages included in this template.
+The template is based on the classic \texttt{report} class. The most important component of this template is the \texttt{settings.tex} file.
+Here are some details:
+\begin{enumerate}
+
+\item All thesis files should be saved in UTF-8 format.
+
+\item We use fonts from the \texttt{newtxtext} and \texttt{newtxmath} families. These are modern Times-style fonts. The document's main font is serif. The title page is displayed in a sans-serif variant.
+
+\item We use the \texttt{biblatex} package to display bibliography,
+and the \texttt{biber} program to process bibliography data. This is a modern replacement for the older \texttt{bibtex} program. Before using this template, learn how to configure your LaTeX build environment so that it uses \texttt{biber}. If you have problems, try running the command \texttt{biber file} from the command line, where \texttt{file} is the main project file name without extension.
+If you use \href{https://www.overleaf.com/}{Overleaf}, it should detect biber usage automatically.
+
+\item If you use local LaTeX environments (e.g., TeXnicCenter), the first compilation with this template may take some time because the environment may install required packages.
+
+\item The template imports the \texttt{listings} package for displaying program listings and the \texttt{algorithm} and \texttt{algpseudocode} packages for displaying pseudocode.
+
+\item The template imports the \texttt{acro} package for handling synonyms/acronyms. If you do not use synonyms, comment out two lines in the main file (they are described in comments on the main template page). Put your synonyms in a dedicated glossary file.
+
+\item The template uses the \texttt{cleveref} package for more flexible in-document references. Check this package's capabilities: for example, compare using \verb|\cref{..}| to the standard \verb|\ref{..}| when referencing figures or tables.
+\end{enumerate}
+
+
+Split your thesis into a series of smaller files (for example: Chapter01.tex, Chapter02.tex, etc.). Include these chapters in the main thesis file using \textbf{include} or \textbf{input} commands (include forces a page break). Place chapters in the \texttt{chapters} subdirectory.
+
+\section{User Definitions}
+
+If you use the same text fragment several times, it is worth defining your own LaTeX commands.
+Here is an example of using definitions such as
+\verb|\newcommand{\NN}{\mathbb{N}}|
+from the main template file. Example:
+
+\begin{quote}
+We use the symbol $\RR$ to denote the set of real numbers and the symbol $\NN$ to denote the set of natural numbers.
+Note that we include the number $0$ in the set of natural numbers, i.e., $\NN =\{0,1,2,\ldots\}$.
+\end{quote}
+
+Using such definitions makes thesis text more consistent and eliminates many errors.
+
+\section{Illustrations}
+
+The \verb|\includegraphics| command allows you to insert images into a LaTeX document (this requires the \texttt{graphicx} package included in the template). Place images in the \texttt{figures} subdirectory.
+
+You can find a detailed description of this command's parameters at \url{https://latexref.xyz/_005cincludegraphics.html}.
+
+\begin{center}
+\includegraphics[width=0.25\textwidth]{figures/ShortArcStrategy.jpg}
+\end{center}
+
+A more flexible approach is to wrap graphics in a \texttt{picture} construction (see Fig. \cref{fig:Lines}).
+Figure \cref{fig:Lines} appears below. \par
+This thesis template uses the \texttt{cleveref} package for flexible references within the document. For example, when using the \texttt{cref} command (instead of standard \verb|\ref{fig:Lines}|),
+you do not need to type the \texttt{Fig.} prefix manually.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[scale=0.45]{figures/RandomLines.jpg}
+  \caption{Simulation of 10000 random line segments in the unit circle. The figure was generated independently.}
+  \label{fig:Lines}
+\end{figure}
+
+If you uncomment the \verb|\listoffigures| command in the main file,
+this figure will appear in the generated list of figures.
+
+\section{Mathematical Formulas}
+
+Inline mathematical expressions are formatted with
+\verb|$ ... $|, e.g. $f(x) = \sin(x^2)$.
+With \verb|\[ ... \]| you format centered, unnumbered equations, e.g.
+\[
+  \sin^2(\alpha) + \cos^2(\alpha) = 1 ~,
+\]
+and with \verb|\begin{equation} ... \end{equation}|
+you format numbered equations, e.g.
+\begin{equation} \label{eq:ExpFnc}
+ \exp(I \cdot t) = \cos(t) + I\cdot\sin(t)
+\end{equation}
+Use numbered equations \textbf{only when}
+you will reference them later in the text using \verb|\ref{...}|.
+
+If your thesis includes any theorems or lemmas, use the \texttt{theorem}, \texttt{lemma}, \texttt{corollary}, and \texttt{proof} environments defined in the \texttt{amsthm} package imported by this template. Example:
+
+\begin{theorem}[Euclid]
+There are infinitely many prime numbers.
+\end{theorem}
+
+\begin{proof}
+Assume that $p_1,\ldots,p_n$ is the list of all prime numbers. Let
+\[
+  q = (p_1\cdot\cdots\cdot p_n) + 1 ~.
+\]
+Then $q>1$, so there must exist a prime number $p$ such that $p|q$. ...
+\end{proof}
+
+\section{Citations}
+\label{examples:cite}
+
+In this template we use the \texttt{biber} library for citation formatting.
+It is a more modern version of the standard (but no longer actively developed) \texttt{bibtex} library.
+Example usage:
+
+\begin{quote}
+   The book \cite{KNUTH01} is devoted to fundamental algorithms.
+   Author \citeauthor{KNUTH01} discusses most classical algorithms in it.
+   From this thesis perspective, the algorithm in \textcite[249]{KNUTH02} is important.\par
+   Papers \cite{KuhnWZ08}, \cite{PapaGeo07} contain concise introductions to \textit{geographic routing}.
+\end{quote}
+
+Entries describing bibliographic sources are best kept in a separate \texttt{bibtex} file.
+The template includes an example \texttt{bibliography.bib} file containing examples of basic entry types.
+Well-formatted bibliographic entries can be found, for example, on
+\href{https://dblp.org/}{dblp} and in \href{https://scholar.google.com/}{Google Scholar}. \par
+
+
+Biber, used with biblatex, provides many predefined styles for citation and bibliography formatting, with common styles such as
+\texttt{numeric}, \texttt{alphabetic}, \texttt{authoryear}, \texttt{authortitle}, and \texttt{verbatim},
+along with sorting options such as \texttt{nty} (name, title, year) or \texttt{nyt} (name, year, title).
+These styles are selected with the \texttt{style=} option in
+\begin{center}
+\verb|\usepackage[backend=biber, style=...]{biblatex}|
+\end{center}
+in the LaTeX preamble. Choose the formatting style jointly with your thesis supervisor. In \texttt{main.tex}, a numeric style without sorting has been proposed, which means the bibliography is displayed in the order in which items are cited in the thesis text.
+
+\subsection*{Note} In LaTeX, you can manage citations manually without a bibtex file. However, manually formatting bibliography correctly is quite tedious. Also remember that every item appearing in the reference list must be cited in the thesis text.
+
+\section{Tables}
+
+You insert tables in the standard way.
+After uncommenting \verb|\listoftables| in the main template file, a list of tables will be included in the document.
+You can refer to this table using \verb|\cref{tab:example}| (\cref{tab:example}).
+
+\begin{table}[htbp]
+  \caption{Sample table }
+  \centering
+  \begin{tabular}{|l|l|r|}
+    \hline
+    \textbf{Category} & \textbf{Parameter} & \textbf{Result} \\
+    \hline
+    Test A & Low load & 15 ms \\
+    Test B & High load & 120 ms \\
+    \hline
+  \end{tabular}
+  \label{tab:example}
+\end{table}
+
+\section{Procedure Code}
+
+The \texttt{listings} package is included in this template.
+It makes it easier to insert source code into the document. In this template, in \texttt{settings.tex},
+default display parameters for code are configured.
+
+Here is an example usage:
+
+\begin{lstlisting}[language=C,
+caption={Euclidean algorithm in C},
+label={lst:hello}]
+/*
+ * Euclidean algorithm.
+ * Returns gcd(a, b).
+ */
+int gcd(int a, int b)
+{
+    while (b != 0) {
+        int r = a % b;
+        a = b;
+        b = r;
+    }
+    return a;
+}
+\end{lstlisting}
+
+Here is another example, a Haskell QuickSort implementation (\cref{lst:hhaskell:qs}) that uses
+the \textit{list comprehension} mechanism to improve code readability: \par
+
+\begin{lstlisting}[style=haskellStyle, %language=haskell,
+caption={QuickSort algorithm in Haskell},
+label={lst:hhaskell:qs}]
+-- QuickSort: time O(n^2); average time O(n log(n))
+qs [] = []
+qs (x:xs) = qs [t| t<- xs, t < x] ++
+            [x] ++
+\t\t\t\t\t\tqs [t| t<- xs, t >= x]
+\end{lstlisting}
+
+
+For inserting pseudocode into your thesis, we recommend using the \texttt{algorithm} and \texttt{algpseudocode} packages included in this template.
+Here is an example pseudocode written in the language of these packages (\cref{ps:filtr}):
+
+
+\begin{algorithm}[H]
+\caption{Filtering}
+\label{ps:filtr}
+\begin{algorithmic}[1]
+\State Initialize: $S \gets \emptyset$
+\For{$v \in V$}
+  \If{$\mathrm{condition}(v)$}
+    \State $S \gets S \cup \{v\}$ \Comment{Add if condition is met}
+  \EndIf
+\EndFor
+\State \Return $S$
+\end{algorithmic}
+\end{algorithm}
+
+\section{Acronyms}
+
+This template uses the \texttt{acro} package. The \texttt{acronims.tex} file is an example configuration file.
+Example usage:
+\begin{quote}
+  During software development, we placed strong emphasis on following two
+  principles: the \ac{dry} principle and the \ac{kiss} principle
+\end{quote}
+The second time you use acronyms/synonyms, only abbreviated names will appear, for example:
+\begin{quote}
+  Applying the \ac{dry} principle means avoiding writing similar code fragments multiple times. Applying this principle greatly simplifies code modification.
+  In turn, applying the \ac{kiss} principle forces the programmer to systematically reflect on the quality of their code.
+\end{quote}
+
+If you do not need acronyms, comment out two lines in \texttt{main.tex} (lines 59 and 73).

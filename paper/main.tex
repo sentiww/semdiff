@@ -1,0 +1,20 @@
+\documentclass[12pt, a4paper, twoside, titlepage]{report}
+
+\input{settings/default.tex}
+
+\AtBeginDocument{%  
+    \hypersetup{%
+        pdfinfo = {%
+                Title    = {\stTytulPL},
+                Author   = {\stAutor},
+                Subject  = {Thesis \stRodzajPracy},
+                Keywords = {\stSlowaKluczowe},
+                ModDate  = {\pdfcreationdate},
+                Creator  = {pdftex}
+            }
+    }
+}
+
+\input{content/default.tex}
+
+\end{document}

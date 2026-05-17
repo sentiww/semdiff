@@ -1,0 +1,56 @@
+%%% PACKAGE IMPORTS
+
+%%% 1. ENCODING AND LANGUAGE
+\RequirePackage[T1]{fontenc}
+%\RequirePackage[utf8]{inputenc} % Optional on newer systems
+\RequirePackage[english,polish]{babel}
+\RequirePackage{csquotes}
+
+%%% 2. MATH AND FONTS
+\RequirePackage{amsmath}
+\RequirePackage{mathtools}
+\RequirePackage{amsthm}
+\RequirePackage{newtxtext}
+\RequirePackage{newtxmath}
+\RequirePackage{microtype}
+
+%%% 3. LAYOUT AND GRAPHICS
+\RequirePackage{geometry}
+\RequirePackage{graphicx}
+\RequirePackage{xcolor}
+\RequirePackage{float}
+
+%%% 4. UTILITIES
+\RequirePackage{etoolbox}
+
+%%% 5. TEXT FORMATTING
+\RequirePackage{titlesec}
+\RequirePackage{caption}
+\RequirePackage{subcaption}
+\RequirePackage{setspace}
+
+%%% 6. ALGORITHMS AND CODE LISTINGS
+\RequirePackage{algorithm}
+\RequirePackage{algpseudocode}
+\RequirePackage{listings}
+
+%%% 7. LINKS AND REFERENCES
+\RequirePackage[
+  pdfusetitle,
+  colorlinks=true,
+  linkcolor=black,
+  citecolor=blue,
+  urlcolor=blue,
+  bookmarksnumbered=true
+]{hyperref}
+\RequirePackage[nameinlink]{cleveref}
+
+%%% 8. BIBLIOGRAPHY
+\RequirePackage[
+  backend=biber,
+  style=numeric,
+  sorting=none,
+  urldate=iso,
+  seconds=true
+]{biblatex}
+\addbibresource{bibliography.bib}

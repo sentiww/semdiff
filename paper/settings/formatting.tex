@@ -1,0 +1,20 @@
+\setlength{\parindent}{0.7cm}
+\setstretch{1.15}
+
+\titleformat{\chapter}[display]
+{\bfseries\Large}
+{\chaptertitlename\ \thechapter}{0.5ex}
+{\huge}
+\titlespacing*{\chapter}{0pt}{-20pt}{20pt}
+
+\titleformat{\section}{\bfseries\Large}{\thesection.}{1em}{}
+\titlespacing*{\section}{0pt}{2.5ex plus 1ex minus .2ex}{1.3ex plus .2ex}
+
+\titleformat{\subsection}{\bfseries\large}{\thesubsection.}{1em}{}
+\titlespacing*{\subsection}{0pt}{2.25ex plus 1ex minus .2ex}{1.0ex plus .2ex}
+
+\counterwithin{figure}{chapter}
+\counterwithin{table}{chapter}
+\numberwithin{equation}{chapter}
+
+\captionsetup{font=small, labelfont=bf, labelsep=period}

@@ -1,0 +1,60 @@
+\chapter{Introduction}
+\label{chapt:Wstep}
+
+Write a short introduction to your thesis here. You can discuss the basic algorithms related to the thesis objective. You can also provide a short historical background. Remember to keep the text concise and avoid generic statements that add no value.
+Here is an example opening:
+
+\begin{quote}
+The problem of specialized algorithms for stream data analysis attracted significant researcher interest at the beginning of the twentieth century. One of the first such algorithms was used to select a random element according to a uniform distribution from a window consisting of the last $N$ stream elements, where $N$ is a fixed number. ...
+\end{quote}
+
+
+\section{Goal and Thesis Structure}
+
+Try to describe the thesis objective here as concisely and precisely as possible. Here is an example beginning of this section:
+
+\begin{quote}
+In this thesis, we study the problem of determining the $k$ most frequent elements in a window containing the last $N$ elements of a data stream. ...
+\end{quote}
+
+\subsection*{Thesis Structure}
+
+Briefly describe, in order, all chapters of your thesis. Example:
+
+\begin{quote}
+In the first chapter (see \ref{chapt1:sec:intro}), we begin with a description of requirements imposed on streaming algorithms (the main requirement is logarithmic memory usage with respect to stream size), describe the concept of a sliding window in data streams, and discuss the Braverman algorithm, ... .\par
+
+In the second chapter, we discuss ... \par
+...
+\end{quote}
+
+\subsection*{Technologies Used}
+
+Describe which programming languages and compilers you used,
+in which environment you ran and tested the developed software, and identify the most important libraries used in the implemented programs.
+
+\section{Use of AI}
+
+If modern AI tools were used during the thesis work,
+this section should describe them: which AI tools were used, what they were used for, and which parts of the thesis they affected. \textbf{You must not omit this section}, although you may place it elsewhere in the thesis.
+Be sure to read the ``Guidelines on AI Usage Rules'', available on the Faculty website (see \cite{WITWytyczneSI}).\par
+
+If AI was used to generate code, mention that here as well, and mark those fragments in the program code (in comments) where AI intervened. Example:
+
+\begin{quote}
+  The thesis used Google's Gemini 3.0 assistant in the Pro version to help transform code from C into Haskell (see, among others, \cref{lst:hhaskell:qs}) and to assist in documenting all modules developed during the thesis.
+\end{quote}
+
+If AI was not used during the thesis work, include a sentence such as:
+"\textit{AI was not used in this thesis}."
+
+
+\section{Background}
+\label{chapt1:sec:intro}
+
+Here you can describe the basic concepts, terms, and notation used in the thesis.
+
+\section{Theoretical Foundations}
+
+You may provide the main results used in your thesis.
+These can include references to the literature - chapter \ref{examples:cite} explains bibliography formatting and citation methods used in the thesis (\verb|\cite{...}|, \verb|\citeauthor{...}|, ...)

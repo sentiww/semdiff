@@ -1,0 +1,38 @@
+\algrenewcommand\algorithmiccomment[1]{\hfill\(\triangleright\) #1}
+\floatname{algorithm}{Algorithm}
+
+\definecolor{codebg}{RGB}{250,250,250}
+\definecolor{codekw}{RGB}{0,64,160}
+\definecolor{codestr}{RGB}{0,128,0}
+\definecolor{codecmt}{RGB}{128,128,128}
+
+\lstset{
+basicstyle=\ttfamily\small,
+backgroundcolor=\color{codebg},
+keywordstyle=\bfseries\color{codekw},
+stringstyle=\color{codestr},
+commentstyle=\itshape\color{codecmt},
+numbers=left,
+numberstyle=\tiny\color{gray},
+stepnumber=1,
+numbersep=8pt,
+tabsize=2,
+showstringspaces=false,
+breaklines=true,
+frame=lines,
+captionpos=b,
+literate={ą}{{\k{a}}}1 {ć}{{\'c}}1 {ę}{{\k{e}}}1 {ł}{{\l{}}}1 {ń}{{\'n}}1 {ó}{{\'o}}1 {ś}{{\'s}}1 {ż}{{\.z}}1 {ź}{{\'z}}1
+{Ą}{{\k{A}}}1 {Ć}{{\'C}}1 {Ę}{{\k{E}}}1 {Ł}{{\L{}}}1 {Ń}{{\'N}}1 {Ó}{{\'O}}1 {Ś}{{\'S}}1 {Ż}{{\.Z}}1 {Ź}{{\'Z}}1
+}
+\renewcommand{\lstlistingname}{Listing}
+\renewcommand{\lstlistlistingname}{List of Listings}
+
+\definecolor{darkgreen}{rgb}{0,0.5,0}
+\lstdefinestyle{haskellStyle}{
+    language=Haskell,
+    commentstyle=\color{darkgreen},
+    keywordstyle=\color{blue}\bfseries,
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    stringstyle=\color{red}
+}
