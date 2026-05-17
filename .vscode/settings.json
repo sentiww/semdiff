@@ -1,5 +1,44 @@
 {
   "editor.formatOnSave": true,
+  "latex-workshop.latex.autoBuild.run": "onSave",
+  "latex-workshop.latex.autoView.run": "never",
+  "latex-workshop.latex.recipe.default": "latexmk",
+  "latex-workshop.latex.outDir": "%DIR%/.tmp",
+  "latex-workshop.formatting.latex": "latexindent",
+  "latex-workshop.latex.tools": [
+    {
+      "name": "latexmk",
+      "command": "latexmk",
+      "args": [
+        "-synctex=1",
+        "-interaction=nonstopmode",
+        "-file-line-error",
+        "-pdf",
+        "-outdir=%OUTDIR%",
+        "%DOC%"
+      ]
+    }
+  ],
+  "latex-workshop.latex.recipes": [
+    {
+      "name": "latexmk",
+      "tools": [
+        "latexmk"
+      ]
+    }
+  ],
+  "latex-workshop.view.pdf.viewer": "browser",
+  "latex-workshop.synctex.afterBuild.enabled": true,
+  "workbench.editorAssociations": {
+    "*.pdf": "default"
+  },
+  "files.associations": {
+    "*.tex": "latex"
+  },
+  "[latex]": {
+    "editor.defaultFormatter": "James-Yu.latex-workshop",
+    "editor.formatOnSave": true
+  },
   "[python]": {
     "editor.defaultFormatter": "ms-python.black-formatter",
     "editor.formatOnSave": true

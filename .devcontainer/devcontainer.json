@@ -28,7 +28,32 @@
         "[markdown]": {
           "editor.defaultFormatter": "esbenp.prettier-vscode",
           "editor.formatOnSave": true
-        }
+        },
+        "latex-workshop.latex.autoBuild.run": "onSave",
+        "latex-workshop.latex.recipe.default": "latexmk",
+        "latex-workshop.latex.tools": [
+          {
+            "name": "latexmk",
+            "command": "latexmk",
+            "args": [
+              "-synctex=1",
+              "-interaction=nonstopmode",
+              "-file-line-error",
+              "-pdf",
+              "-outdir=%OUTDIR%",
+              "%DOC%"
+            ]
+          }
+        ],
+        "latex-workshop.latex.recipes": [
+          {
+            "name": "latexmk",
+            "tools": [
+              "latexmk"
+            ]
+          }
+        ],
+        "latex-workshop.view.pdf.viewer": "tab"
       },
       "extensions": [
         "openai.chatgpt",
@@ -36,7 +61,8 @@
         "ms-python.vscode-pylance",
         "ms-python.black-formatter",
         "mkhl.shfmt",
-        "esbenp.prettier-vscode"
+        "esbenp.prettier-vscode",
+        "James-Yu.latex-workshop"
       ]
     }
   },

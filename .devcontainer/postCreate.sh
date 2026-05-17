@@ -5,4 +5,4 @@ pip install --upgrade pip
 pip install -r requirements.txt
 pip install black mdformat
 sudo apt-get update
-sudo apt-get install -y shfmt
+sudo apt-get install -y shfmt make latexmk texlive-full
