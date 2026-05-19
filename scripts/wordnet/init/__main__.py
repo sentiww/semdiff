@@ -1,15 +1,8 @@
-import logging
-import sys
+from scripts.common import logging
 
-import main
+from . import main
 
 if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        stream=sys.stdout,
-        force=True,
-    )
+    logging.configure()
 
     main.run()
