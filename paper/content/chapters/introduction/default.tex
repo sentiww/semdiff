@@ -3,8 +3,42 @@
 
 \section{Dangers of Classifier Errors}
 
-\section{Understanding of Classification Errors}
+\ac{ai} systems are now deployed at scale across real-world, decision-critical domains, such as autonomous driving or healthcare.
+As model outputs increasingly drive critical decisions, accuracy and robustness to misclassification become essential.
+
+At the same time, achieving robust behavior remains difficult.
+Most classifiers are trained on closed-world datasets and are primarily optimized for \ac{id} data.
+Which may causes models to produce highly confident predictions that are incorrect in classification of \ac{ood} data.
+
+Conventional model evaluation typically aggregates all such misclassifications into a single error count.
+This does not account for whether an error is between semantically similar classes or semantically dissimilar classes,
+despite the fact that these outcomes can imply different practical risk.
+Recognizing this motivates research into the classification errors profiles of different models.
+
+Classification errors are not made equal, either in their cause or thier consequences.
+It is useful to distinguish errors that occur between semantically related classes from errors that occur between semantically distant classes.
+For example, in case of an autonomous vehicle, confusing two visually similar vehicle categories may be less consequential than confusing a pedestrian with a background object.
+Even though both cases are counted identically in standard accuracy metrics, they can differ substantially in practical severity.
+
+This suggests that error analysis should not only take into account whether a prediction is correct, but also for how wrong it is in semantic terms.
+A semantic analysis of classification can reveal systematic model biases that remain hidden in standard error rates.
+Such a view also supports more informed model improvement strategies, such as data curation and training with greater penalizes for high-impact confusions.
 
 \section{Research Goal and Scope}
 
+The goal of this work is to develop a set of tools for analysis of classification errors according to semantic similarity between predicted and target classes.
+Rather than treating all misclassifications as equal, the idea is to investigate whether a semantic taxonomy provides additional explanatory value to errors.
+The central research question is therefore: to what extent do semantics of errors improve the interpretation of model behavior?
+
+The scope of this study is limited to image classification models evaluated on existing, labeled benchmark datasets.
+Analysis will be performed on model prediction outcomes and is purely post hoc, models are not modified in any way.
+The objective is not to replace standard model performance metrics, but to extend them with semantic information.
+
 \section{Main Contribution}
+
+This thesis makes three main contributions.
+First, it introduces a principled distinction between semantically similar and semantically dissimilar misclassifications, and formalizes this distinction for empirical analysis.
+Second, it proposes an evaluation workflow that integrates conventional performance measures with semantics-aware error characterization.
+Third, it provides an empirical study demonstrating how this perspective yields additional insight into model errors.
+
+Together, these contributions allow for a more detailed interpretation of classifier reliability and motivate the inclusion of semantic error structure in the model assessment process.
